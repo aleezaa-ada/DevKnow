@@ -46,13 +46,18 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
     """Serializer for creating questions."""
     title = serializers.CharField(required=True, min_length=5)
     description = serializers.CharField(required=True, min_length=10)
+    tag_names = serializers.ListField(
+        child=serializers.CharField(), write_only=True, required=False, default=list
+    )
 
     class Meta:
         model = Question
-        fields = ['title', 'description', 'status']
+        fields = ['id', 'title', 'description', 'status', 'tag_names']
+        read_only_fields = ['id']
 
     def create(self, validated_data):
-        """Create question with current user as author."""
+        """Create question with current user as author. Tags handled in view."""
+        validated_data.pop('tag_names', [])
         validated_data['author'] = self.context['request'].user
         return Question.objects.create(**validated_data)
 

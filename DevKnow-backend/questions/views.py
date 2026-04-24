@@ -26,6 +26,16 @@ class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all()
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        qs = Question.objects.select_related('author').prefetch_related('tags')
+        status_filter = self.request.query_params.get('status')
+        tag_filter = self.request.query_params.get('tag')
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        if tag_filter:
+            qs = qs.filter(tags__name=tag_filter)
+        return qs
+
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
         if self.action == 'create':
@@ -36,9 +46,19 @@ class QuestionViewSet(viewsets.ModelViewSet):
             return QuestionDetailSerializer
 
     def perform_create(self, serializer):
-        """Set author to current user on create."""
-        serializer.save(author=self.request.user)
-
+        """Set author to current user and handle tag creation."""
+        tag_names = self.request.data.get('tag_names', [])
+        question = serializer.save(author=self.request.user)
+        for name in tag_names:
+            clean_name = name.lower().strip()
+            if not clean_name:
+                continue
+            tag, _ = Tag.objects.get_or_create(name=clean_name)
+            question.tags.add(tag)
+            tag.usage_count += 1
+            tag.save()
+        # TODO: add AI generation 
+        
     def perform_update(self, serializer):
         """Only allow update if user is the author."""
         if serializer.instance.author != self.request.user:

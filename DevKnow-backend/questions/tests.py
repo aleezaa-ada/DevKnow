@@ -382,3 +382,158 @@ class QuestionCreateAPITests(TestCase):
         question = Question.objects.get(title='Test Question Title')
         self.assertEqual(question.author, self.author)
         self.assertNotEqual(question.author, other_user)
+
+    def test_create_question_with_tag_names(self):
+        """Test creating a question with tag_names creates/reuses tags."""
+        self.client.force_authenticate(user=self.author)
+        data = {
+            'title': 'Question with tags',
+            'description': 'A detailed description for tag creation test',
+            'tag_names': ['Python', 'API']
+        }
+        response = self.client.post(self.questions_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        question = Question.objects.get(title='Question with tags')
+        self.assertEqual(question.tags.count(), 2)
+        self.assertTrue(Tag.objects.filter(name='python').exists())
+        self.assertTrue(Tag.objects.filter(name='api').exists())
+
+    def test_create_question_with_existing_tag_increments_usage_count(self):
+        """Test existing tag is reused and usage_count increments."""
+        existing_tag = Tag.objects.create(name='python', usage_count=3)
+        self.client.force_authenticate(user=self.author)
+        data = {
+            'title': 'Question with existing tag',
+            'description': 'A detailed description for usage count increment',
+            'tag_names': ['Python']
+        }
+        response = self.client.post(self.questions_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        existing_tag.refresh_from_db()
+        self.assertEqual(existing_tag.usage_count, 4)
+
+    def test_create_question_rejects_non_list_tag_names(self):
+        """Test tag_names must be a list."""
+        self.client.force_authenticate(user=self.author)
+        data = {
+            'title': 'Question invalid tags payload',
+            'description': 'A detailed description for invalid tags payload',
+            'tag_names': 'python'
+        }
+        response = self.client.post(self.questions_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_question_rejects_blank_tag_names(self):
+        """Test empty/whitespace tag names are rejected with 400."""
+        self.client.force_authenticate(user=self.author)
+        data = {
+            'title': 'Question with blank tags',
+            'description': 'A detailed description for blank tags handling',
+            'tag_names': ['Python', '   ', '', 'API']
+        }
+        response = self.client.post(self.questions_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class QuestionFilterAPITests(TestCase):
+    """Tests for question list filtering by status and tag."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.author = User.objects.create_user(
+            username='author_filter', email='author_filter@ex.com', password='pass123'
+        )
+        self.client.force_authenticate(user=self.author)
+
+        self.tag_python = Tag.objects.create(name='python')
+        self.tag_debug = Tag.objects.create(name='debugging')
+
+        self.open_question = Question.objects.create(
+            author=self.author,
+            title='Open question',
+            description='Description for open question',
+            status=Question.STATUS_OPEN
+        )
+        self.open_question.tags.add(self.tag_python)
+
+        self.answered_question = Question.objects.create(
+            author=self.author,
+            title='Answered question',
+            description='Description for answered question',
+            status=Question.STATUS_ANSWERED
+        )
+        self.answered_question.tags.add(self.tag_debug)
+
+    def test_filter_questions_by_status(self):
+        """Test filtering questions by status query param."""
+        response = self.client.get('/api/questions/?status=open')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['title'], 'Open question')
+
+    def test_filter_questions_by_tag(self):
+        """Test filtering questions by tag query param."""
+        response = self.client.get('/api/questions/?tag=python')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['title'], 'Open question')
+
+
+class QuestionPermissionAPITests(TestCase):
+    """Tests for update/delete ownership and auth boundaries."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.owner = User.objects.create_user(
+            username='owner', email='owner@ex.com', password='pass123'
+        )
+        self.other_user = User.objects.create_user(
+            username='other_owner', email='other_owner@ex.com', password='pass123'
+        )
+        self.question = Question.objects.create(
+            author=self.owner,
+            title='Owner question',
+            description='Description owned by the first user'
+        )
+        self.detail_url = f'/api/questions/{self.question.id}/'
+
+    def test_retrieve_question_unauthenticated_returns_401(self):
+        """Test detail endpoint requires authentication."""
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_owner_can_update_question(self):
+        """Test owner can update their own question."""
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.patch(
+            self.detail_url,
+            {'title': 'Updated owner question'},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.title, 'Updated owner question')
+
+    def test_non_owner_cannot_update_question(self):
+        """Test non-owner gets 403 when updating question."""
+        self.client.force_authenticate(user=self.other_user)
+        response = self.client.patch(
+            self.detail_url,
+            {'title': 'Illegal update attempt'},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_owner_can_delete_question(self):
+        """Test owner can delete their own question."""
+        self.client.force_authenticate(user=self.owner)
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Question.objects.filter(pk=self.question.pk).exists())
+
+    def test_non_owner_cannot_delete_question(self):
+        """Test non-owner gets 403 when deleting question."""
+        self.client.force_authenticate(user=self.other_user)
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Question.objects.filter(pk=self.question.pk).exists())
