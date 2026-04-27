@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+BACKEND_DIR="$REPO_ROOT/DevKnow-backend"
+
+if [[ ! -d "$BACKEND_DIR" ]]; then
+  echo "[pre-push] ERROR: Backend directory not found at $BACKEND_DIR"
+  exit 1
+fi
+
+PYTHON_BIN="$BACKEND_DIR/venv/bin/python"
+if [[ ! -x "$PYTHON_BIN" ]]; then
+  PYTHON_BIN="$(command -v python3 || true)"
+fi
+
+if [[ -z "${PYTHON_BIN:-}" ]]; then
+  echo "[pre-push] ERROR: Python not found."
+  exit 1
+fi
+
+echo "[pre-push] Using Python: $PYTHON_BIN"
+cd "$BACKEND_DIR"
+
+echo "[pre-push] Running lint (ruff)..."
+if ! "$PYTHON_BIN" -m ruff check .; then
+  echo "[pre-push] Linting failed. Fix issues before pushing."
+  exit 1
+fi
+
+echo "[pre-push] Running Django tests..."
+if ! "$PYTHON_BIN" manage.py test --verbosity=1 --keepdb --parallel auto; then
+  echo "[pre-push] Tests failed. Fix tests before pushing."
+  exit 1
+fi
+
+echo "[pre-push] All checks passed. Proceeding with push."

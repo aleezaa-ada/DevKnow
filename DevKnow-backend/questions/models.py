@@ -1,8 +1,9 @@
-from django.db import models
-from django.contrib.postgres.search import SearchVectorField
-from django.contrib.postgres.indexes import GinIndex
 from django.conf import settings
- 
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+
+
 class Tag(models.Model):
     name = models.CharField(max_length=50, unique=True)
     usage_count = models.IntegerField(default=0)

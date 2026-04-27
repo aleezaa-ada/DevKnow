@@ -1,7 +1,7 @@
-import os
 import logging
-from openai import OpenAI
+import os
 
+from openai import OpenAI
 
 logger = logging.getLogger(__name__)
 

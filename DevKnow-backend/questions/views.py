@@ -1,16 +1,17 @@
-from rest_framework import viewsets, permissions, generics
-from django.contrib.auth import get_user_model
-from .models import Question, Tag, AIResponse, ApprovedAnswer
-import os
 import logging
+import os
+
+from django.contrib.auth import get_user_model
+from rest_framework import permissions, viewsets
+
 from .ai_service import generate_ai_response
+from .models import AIResponse, Question, Tag
 from .serializers import (
-    QuestionListSerializer,
-    QuestionDetailSerializer,
-    QuestionCreateSerializer,
-    TagSerializer,
     AIResponseSerializer,
-    ApprovedAnswerSerializer,
+    QuestionCreateSerializer,
+    QuestionDetailSerializer,
+    QuestionListSerializer,
+    TagSerializer,
 )
 
 User = get_user_model()

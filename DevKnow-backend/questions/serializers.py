@@ -1,6 +1,7 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Tag, Question, AIResponse, ApprovedAnswer
+from rest_framework import serializers
+
+from .models import AIResponse, ApprovedAnswer, Question, Tag
 
 User = get_user_model()
 

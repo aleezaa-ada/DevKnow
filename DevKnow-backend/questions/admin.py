@@ -1,6 +1,7 @@
 from django.contrib import admin
-from .models import Question, AIResponse, ApprovedAnswer, Tag, Vote, ReviewAction
- 
+
+from .models import AIResponse, ApprovedAnswer, Question, ReviewAction, Tag, Vote
+
 admin.site.register(Question)
 admin.site.register(AIResponse)
 admin.site.register(ApprovedAnswer)

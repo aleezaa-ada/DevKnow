@@ -1,12 +1,14 @@
-from django.test import TestCase
-from django.contrib.auth import get_user_model
-from unittest.mock import patch, MagicMock
 import os
-from .models import Question, AIResponse
-from .ai_service import generate_ai_response, AIServiceError
-from rest_framework.test import APIClient
+from unittest.mock import MagicMock, patch
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
 from rest_framework import status as drf_status
- 
+from rest_framework.test import APIClient
+
+from .ai_service import AIServiceError, generate_ai_response
+from .models import AIResponse, Question
+
 User = get_user_model()
  
  
