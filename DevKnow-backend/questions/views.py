@@ -1,6 +1,9 @@
 from rest_framework import viewsets, permissions, generics
 from django.contrib.auth import get_user_model
 from .models import Question, Tag, AIResponse, ApprovedAnswer
+import os
+import logging
+from .ai_service import generate_ai_response
 from .serializers import (
     QuestionListSerializer,
     QuestionDetailSerializer,
@@ -11,6 +14,7 @@ from .serializers import (
 )
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class QuestionViewSet(viewsets.ModelViewSet):
@@ -46,18 +50,41 @@ class QuestionViewSet(viewsets.ModelViewSet):
             return QuestionDetailSerializer
 
     def perform_create(self, serializer):
-        """Set author to current user and handle tag creation."""
         tag_names = self.request.data.get('tag_names', [])
-        question = serializer.save(author=self.request.user)
+        question = serializer.save()
+ 
+        # Handle tags
         for name in tag_names:
-            clean_name = name.lower().strip()
+            clean_name = str(name).lower().strip()
             if not clean_name:
                 continue
             tag, _ = Tag.objects.get_or_create(name=clean_name)
             question.tags.add(tag)
             tag.usage_count += 1
             tag.save()
-        # TODO: add AI generation 
+ 
+        # Trigger AI generation — wrap in try/except so question saves
+        # even if the AI is unavailable
+        try:
+            ai_text = generate_ai_response(question.title, question.description)
+            AIResponse.objects.create(
+                question=question,
+                content=ai_text,
+                model_used=os.getenv('DELOITTE_MODEL', 'gpt-4o'),
+                approval_status=AIResponse.STATUS_PENDING,
+            )
+            question.status = Question.STATUS_PENDING
+            question.save()
+        except Exception:
+            # AI failed — question stays open.
+            logger.exception(
+                'AI generation failed for question creation',
+                extra={
+                    'question_id': question.id,
+                    'author_id': question.author_id,
+                },
+            )
+
         
     def perform_update(self, serializer):
         """Only allow update if user is the author."""
@@ -108,4 +135,3 @@ class ApprovedAnswerViewSet(viewsets.ViewSet):
         """Not implemented for approved answers."""
         from rest_framework.response import Response
         return Response(status=404)
-
