@@ -538,3 +538,103 @@ class QuestionPermissionAPITests(TestCase):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertTrue(Question.objects.filter(pk=self.question.pk).exists())
+
+class ReviewAnswerAPITests(TestCase):
+    """Tests for the review/approve/reject endpoint."""
+ 
+    def setUp(self):
+        self.client = APIClient()
+        self.standard_user = User.objects.create_user(
+            username='dev', email='dev@ex.com', password='pass123', role='standard'
+        )
+        self.senior_user = User.objects.create_user(
+            username='senior', email='senior@ex.com', password='pass123', role='senior'
+        )
+        self.question = Question.objects.create(
+            author=self.standard_user,
+            title='Test Question',
+            description='Test description',
+            status=Question.STATUS_PENDING
+        )
+        self.ai_response = AIResponse.objects.create(
+            question=self.question,
+            content='AI generated answer',
+            approval_status=AIResponse.STATUS_PENDING
+        )
+        self.review_url = f'/api/questions/{self.ai_response.id}/review/'
+ 
+    def test_standard_user_cannot_review(self):
+        """Standard users get 403 on the review endpoint."""
+        self.client.force_authenticate(user=self.standard_user)
+        response = self.client.post(self.review_url, {'action': 'approved'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+ 
+    def test_unauthenticated_cannot_review(self):
+        """Unauthenticated users get 401 on the review endpoint."""
+        response = self.client.post(self.review_url, {'action': 'approved'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+ 
+    def test_senior_can_approve(self):
+        """Senior developer can approve an AI response."""
+        self.client.force_authenticate(user=self.senior_user)
+        response = self.client.post(
+            self.review_url,
+            {'action': 'approved'},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check AIResponse status updated
+        self.ai_response.refresh_from_db()
+        self.assertEqual(self.ai_response.approval_status, AIResponse.STATUS_APPROVED)
+        # Check question status updated
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.status, Question.STATUS_ANSWERED)
+        # Check ApprovedAnswer was created
+        self.assertTrue(ApprovedAnswer.objects.filter(question=self.question).exists())
+ 
+    def test_senior_can_approve_with_edit(self):
+        """Senior developer can approve with edited content."""
+        self.client.force_authenticate(user=self.senior_user)
+        response = self.client.post(
+            self.review_url,
+            {'action': 'edited', 'edited_content': 'Improved answer'},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        approved = ApprovedAnswer.objects.get(question=self.question)
+        self.assertEqual(approved.final_content, 'Improved answer')
+        self.assertEqual(approved.approved_by, self.senior_user)
+ 
+    def test_senior_can_reject(self):
+        """Senior developer can reject an AI response."""
+        self.client.force_authenticate(user=self.senior_user)
+        response = self.client.post(
+            self.review_url,
+            {'action': 'rejected', 'review_notes': 'Incorrect info'},
+            format='json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.ai_response.refresh_from_db()
+        self.assertEqual(self.ai_response.approval_status, AIResponse.STATUS_REJECTED)
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.status, Question.STATUS_OPEN)
+        self.assertFalse(ApprovedAnswer.objects.filter(question=self.question).exists())
+ 
+    def test_review_creates_audit_log(self):
+        """Every review action creates a ReviewAction record."""
+        from .models import ReviewAction
+        self.client.force_authenticate(user=self.senior_user)
+        self.client.post(self.review_url, {'action': 'approved'}, format='json')
+        self.assertTrue(ReviewAction.objects.filter(ai_response=self.ai_response).exists())
+
+    def test_reject_after_approve_removes_approved_answer(self):
+        """Rejecting a previously approved response removes the ApprovedAnswer."""
+        self.client.force_authenticate(user=self.senior_user)
+        # First approve
+        self.client.post(self.review_url, {'action': 'approved'}, format='json')
+        self.assertTrue(ApprovedAnswer.objects.filter(question=self.question).exists())
+        # Then reject
+        self.client.post(self.review_url, {'action': 'rejected', 'review_notes': 'Changed mind'}, format='json')
+        self.assertFalse(ApprovedAnswer.objects.filter(question=self.question).exists())
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.status, Question.STATUS_OPEN)

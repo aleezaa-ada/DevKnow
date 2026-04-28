@@ -2,15 +2,19 @@ import logging
 import os
 
 from django.contrib.auth import get_user_model
-from rest_framework import permissions, viewsets
+from rest_framework import generics, permissions, status, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .ai_service import generate_ai_response
-from .models import AIResponse, Question, Tag
+from .models import AIResponse, ApprovedAnswer, Question, ReviewAction, Tag
+from .permissions import IsSeniorOrAdmin
 from .serializers import (
     AIResponseSerializer,
     QuestionCreateSerializer,
     QuestionDetailSerializer,
     QuestionListSerializer,
+    ReviewActionSerializer,
     TagSerializer,
 )
 
@@ -136,3 +140,62 @@ class ApprovedAnswerViewSet(viewsets.ViewSet):
         """Not implemented for approved answers."""
         from rest_framework.response import Response
         return Response(status=404)
+ 
+class PendingReviewListView(generics.ListAPIView):
+    """Lists all questions awaiting senior review."""
+    serializer_class   = QuestionDetailSerializer
+    permission_classes = [IsSeniorOrAdmin]
+ 
+    def get_queryset(self):
+        return Question.objects.filter(
+            status=Question.STATUS_PENDING
+        ).select_related('ai_response')
+ 
+ 
+class ReviewAnswerView(APIView):
+    """Senior developer approves or rejects an AI response."""
+    permission_classes = [IsSeniorOrAdmin]
+ 
+    def post(self, request, pk):
+        try:
+            ai_response = AIResponse.objects.get(pk=pk)
+        except AIResponse.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+ 
+        serializer = ReviewActionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+ 
+        action         = serializer.validated_data['action']
+        edited_content = serializer.validated_data.get('edited_content', '')
+        notes          = serializer.validated_data.get('review_notes', '')
+ 
+        # Save audit log — always, regardless of approve or reject
+        ReviewAction.objects.create(
+            ai_response    = ai_response,
+            reviewer       = request.user,
+            action         = action,
+            edited_content = edited_content,
+            review_notes   = notes,
+        )
+ 
+        if action in ['approved', 'edited']:
+            final_content = edited_content if edited_content else ai_response.content
+            ApprovedAnswer.objects.update_or_create(
+                question = ai_response.question,
+                defaults = {
+                    'ai_response':   ai_response,
+                    'approved_by':   request.user,
+                    'final_content': final_content,
+                },
+            )
+            ai_response.approval_status  = AIResponse.STATUS_APPROVED
+            ai_response.question.status  = Question.STATUS_ANSWERED
+        else:
+            ApprovedAnswer.objects.filter(question=ai_response.question).delete()
+            ai_response.approval_status  = AIResponse.STATUS_REJECTED
+            ai_response.question.status  = Question.STATUS_OPEN
+ 
+        ai_response.save()
+        ai_response.question.save()
+        return Response({'status': 'ok', 'action': action})

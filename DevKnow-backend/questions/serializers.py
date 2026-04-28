@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import AIResponse, ApprovedAnswer, Question, Tag
+from .models import AIResponse, ApprovedAnswer, Question, ReviewAction, Tag
 
 User = get_user_model()
 
@@ -80,3 +80,9 @@ class ApprovedAnswerSerializer(serializers.ModelSerializer):
         model = ApprovedAnswer
         fields = ['id', 'question', 'ai_response', 'approved_by', 'final_content', 'approved_at']
         read_only_fields = ['id', 'approved_at']
+
+class ReviewActionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model   = ReviewAction
+        fields  = ['action', 'edited_content', 'review_notes']
+        extra_kwargs = {'edited_content': {'required': False}, 'review_notes': {'required': False}}
