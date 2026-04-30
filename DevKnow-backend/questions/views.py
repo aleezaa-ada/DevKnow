@@ -2,12 +2,14 @@ import logging
 import os
 
 from django.contrib.auth import get_user_model
+from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .ai_service import generate_ai_response
-from .models import AIResponse, ApprovedAnswer, Question, ReviewAction, Tag
+from .models import AIResponse, ApprovedAnswer, Question, ReviewAction, Tag, Vote
+from .models import ApprovedAnswer as ApprovedAnswerModel
 from .permissions import IsSeniorOrAdmin
 from .serializers import (
     AIResponseSerializer,
@@ -169,6 +171,9 @@ class ReviewAnswerView(APIView):
         action         = serializer.validated_data['action']
         edited_content = serializer.validated_data.get('edited_content', '')
         notes          = serializer.validated_data.get('review_notes', '')
+
+        # Fetch question directly to avoid stale ORM cache via ai_response.question
+        question = Question.objects.get(pk=ai_response.question_id)
  
         # Save audit log — always, regardless of approve or reject
         ReviewAction.objects.create(
@@ -182,20 +187,69 @@ class ReviewAnswerView(APIView):
         if action in ['approved', 'edited']:
             final_content = edited_content if edited_content else ai_response.content
             ApprovedAnswer.objects.update_or_create(
-                question = ai_response.question,
+                question = question,
                 defaults = {
                     'ai_response':   ai_response,
                     'approved_by':   request.user,
                     'final_content': final_content,
                 },
             )
-            ai_response.approval_status  = AIResponse.STATUS_APPROVED
-            ai_response.question.status  = Question.STATUS_ANSWERED
+            ai_response.approval_status = AIResponse.STATUS_APPROVED
+            question.status             = Question.STATUS_ANSWERED
         else:
-            ApprovedAnswer.objects.filter(question=ai_response.question).delete()
-            ai_response.approval_status  = AIResponse.STATUS_REJECTED
-            ai_response.question.status  = Question.STATUS_OPEN
+            ApprovedAnswer.objects.filter(question=question).delete()
+            ai_response.approval_status = AIResponse.STATUS_REJECTED
+            question.status             = Question.STATUS_OPEN
  
         ai_response.save()
-        ai_response.question.save()
+        question.save()
         return Response({'status': 'ok', 'action': action})
+ 
+class SearchQuestionsView(generics.ListAPIView):
+    serializer_class   = QuestionListSerializer
+    permission_classes = [permissions.IsAuthenticated]
+ 
+    def get_queryset(self):
+        query = self.request.query_params.get('q', '').strip()
+        if not query:
+            return Question.objects.none()
+        search_query = SearchQuery(query)
+        vector = (
+            SearchVector('title', weight='A') +
+            SearchVector('description', weight='B')
+        )
+        return (
+            Question.objects
+            .annotate(rank=SearchRank(vector, search_query))
+            .filter(rank__gte=0.01)
+            .order_by('-rank')
+        )
+ 
+ 
+class VoteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+ 
+    def post(self, request, pk):
+        try:
+            answer = ApprovedAnswerModel.objects.get(pk=pk)
+        except ApprovedAnswerModel.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+ 
+        if answer.question.author == request.user:
+            return Response(
+                {'error': 'You cannot vote on your own question'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+ 
+        value = request.data.get('value')
+        if value not in [1, -1]:
+            return Response(
+                {'error': 'value must be 1 (upvote) or -1 (downvote)'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+ 
+        vote, created = Vote.objects.update_or_create(
+            user=request.user, answer=answer,
+            defaults={'value': value}
+        )
+        return Response({'voted': value, 'created': created})

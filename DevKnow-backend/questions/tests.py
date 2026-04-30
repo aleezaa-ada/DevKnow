@@ -638,3 +638,125 @@ class ReviewAnswerAPITests(TestCase):
         self.assertFalse(ApprovedAnswer.objects.filter(question=self.question).exists())
         self.question.refresh_from_db()
         self.assertEqual(self.question.status, Question.STATUS_OPEN)
+
+    def test_approve_after_reject_creates_approved_answer_and_sets_status(self):
+        """Re-approving after a rejection creates the ApprovedAnswer and sets question to answered."""
+        self.client.force_authenticate(user=self.senior_user)
+        # Approve
+        self.client.post(self.review_url, {'action': 'approved'}, format='json')
+        # Reject
+        self.client.post(self.review_url, {'action': 'rejected'}, format='json')
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.status, Question.STATUS_OPEN)
+        # Approve again
+        response = self.client.post(self.review_url, {'action': 'approved'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(ApprovedAnswer.objects.filter(question=self.question).exists())
+        self.question.refresh_from_db()
+        self.assertEqual(self.question.status, Question.STATUS_ANSWERED)
+
+class SearchAPITests(TestCase):
+    """Tests for the search endpoint."""
+ 
+    def setUp(self):
+        self.client = APIClient()
+        self.search_url = '/api/questions/search/'
+        self.user = User.objects.create_user(
+            username='dev', email='dev@ex.com', password='pass123'
+        )
+        self.client.force_authenticate(user=self.user)
+        Question.objects.create(
+            author=self.user,
+            title='How to configure Azure CI pipeline',
+            description='Setting up Azure DevOps for microservices'
+        )
+        Question.objects.create(
+            author=self.user,
+            title='Python decorators explained',
+            description='How to write and use Python decorators'
+        )
+ 
+    def test_search_requires_auth(self):
+        """Search endpoint requires authentication."""
+        self.client.force_authenticate(user=None)
+        response = self.client.get(self.search_url, {'q': 'azure'})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+ 
+    def test_search_returns_matching_questions(self):
+        """Search returns questions matching the query."""
+        response = self.client.get(self.search_url, {'q': 'azure'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        titles = [q['title'] for q in response.data]
+        self.assertIn('How to configure Azure CI pipeline', titles)
+        self.assertNotIn('Python decorators explained', titles)
+ 
+    def test_search_empty_query_returns_empty(self):
+        """Empty search query returns no results."""
+        response = self.client.get(self.search_url, {'q': ''})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+ 
+    def test_search_no_results(self):
+        """Search returns empty list when nothing matches."""
+        response = self.client.get(self.search_url, {'q': 'kubernetes'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+
+class VoteAPITests(TestCase):
+    """Tests for the voting endpoint."""
+ 
+    def setUp(self):
+        self.client = APIClient()
+        self.author = User.objects.create_user(
+            username='author', email='author@ex.com', password='pass123'
+        )
+        self.voter = User.objects.create_user(
+            username='voter', email='voter@ex.com', password='pass123'
+        )
+        self.question = Question.objects.create(
+            author=self.author, title='Q', description='D'
+        )
+        approver = User.objects.create_user(
+            username='approver', email='approver@ex.com', password='pass', role='senior'
+        )
+        self.answer = ApprovedAnswer.objects.create(
+            question=self.question,
+            approved_by=approver,
+            final_content='Final answer'
+        )
+        self.vote_url = f'/api/questions/answers/{self.answer.id}/vote/'
+ 
+    def test_vote_requires_auth(self):
+        response = self.client.post(self.vote_url, {'value': 1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+ 
+    def test_upvote(self):
+        self.client.force_authenticate(user=self.voter)
+        response = self.client.post(self.vote_url, {'value': 1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['voted'], 1)
+        self.assertTrue(response.data['created'])
+ 
+    def test_downvote(self):
+        self.client.force_authenticate(user=self.voter)
+        response = self.client.post(self.vote_url, {'value': -1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['voted'], -1)
+ 
+    def test_vote_on_own_question_forbidden(self):
+        self.client.force_authenticate(user=self.author)
+        response = self.client.post(self.vote_url, {'value': 1}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+ 
+    def test_duplicate_vote_updates_not_creates(self):
+        from .models import Vote
+        self.client.force_authenticate(user=self.voter)
+        self.client.post(self.vote_url, {'value': 1}, format='json')
+        response = self.client.post(self.vote_url, {'value': -1}, format='json')
+        self.assertFalse(response.data['created'])
+        self.assertEqual(Vote.objects.filter(user=self.voter, answer=self.answer).count(), 1)
+ 
+    def test_invalid_vote_value(self):
+        self.client.force_authenticate(user=self.voter)
+        response = self.client.post(self.vote_url, {'value': 5}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
