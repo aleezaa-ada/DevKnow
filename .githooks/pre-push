@@ -34,4 +34,30 @@ if ! "$PYTHON_BIN" manage.py test --verbosity=1 --keepdb --parallel auto; then
   exit 1
 fi
 
+# ── Frontend checks ────────────────────────────────────────────────────────────
+FRONTEND_DIR="$REPO_ROOT/DevKnow-frontend"
+
+if [[ -d "$FRONTEND_DIR" ]]; then
+  echo "[pre-push] Running frontend lint (eslint)..."
+  cd "$FRONTEND_DIR"
+
+  if [[ ! -d "node_modules" ]]; then
+    echo "[pre-push] node_modules not found — running npm install..."
+    npm install --silent
+  fi
+
+  if ! npm run lint --silent; then
+    echo "[pre-push] Frontend lint failed. Fix issues before pushing."
+    exit 1
+  fi
+
+  echo "[pre-push] Running frontend build..."
+  if ! npm run build --silent; then
+    echo "[pre-push] Frontend build failed. Fix errors before pushing."
+    exit 1
+  fi
+else
+  echo "[pre-push] No frontend directory found, skipping frontend checks."
+fi
+
 echo "[pre-push] All checks passed. Proceeding with push."
