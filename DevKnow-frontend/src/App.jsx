@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import QuestionListPage from './pages/QuestionListPage'
 import QuestionDetailPage from './pages/QuestionDetailPage'
@@ -12,11 +13,11 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<QuestionListPage />} />
-        <Route path="/questions/:id" element={<QuestionDetailPage />} />
-        <Route path="/ask" element={<AskQuestionPage />} />
-        <Route path="/review" element={<ReviewQueuePage />} />
-        <Route path="/review/:id" element={<ReviewDetailPage />} />
+        <Route path="/" element={<ProtectedRoute><QuestionListPage /></ProtectedRoute>} />
+        <Route path="/questions/:id" element={<ProtectedRoute><QuestionDetailPage /></ProtectedRoute>} />
+        <Route path="/ask" element={<ProtectedRoute><AskQuestionPage /></ProtectedRoute>} />
+        <Route path="/review" element={<ProtectedRoute><ReviewQueuePage /></ProtectedRoute>} />
+        <Route path="/review/:id" element={<ProtectedRoute><ReviewDetailPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

@@ -1,8 +1,60 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+
 export default function LoginPage() {
+  const { login } = useAuth()
+  const navigate = useNavigate()
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+    try {
+      await login(username, password)
+      navigate('/', { replace: true })
+    } catch {
+      setError('Invalid username or password.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <main>
-      <h1>Login</h1>
-      <p>Sign in with your Deloitte credentials.</p>
+      <h1>DevKnow</h1>
+      <h2>Sign in</h2>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="username">Username</label>
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            autoFocus
+          />
+        </div>
+        <div>
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && <p role="alert">{error}</p>}
+        <button type="submit" disabled={loading}>
+          {loading ? 'Signing in…' : 'Sign in'}
+        </button>
+      </form>
     </main>
   )
 }
