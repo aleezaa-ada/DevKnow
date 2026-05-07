@@ -51,6 +51,12 @@ if [[ -d "$FRONTEND_DIR" ]]; then
     exit 1
   fi
 
+  echo "[pre-push] Running frontend tests..."
+  if ! npm test --silent; then
+    echo "[pre-push] Frontend tests failed. Fix tests before pushing."
+    exit 1
+  fi
+
   echo "[pre-push] Running frontend build..."
   if ! npm run build --silent; then
     echo "[pre-push] Frontend build failed. Fix errors before pushing."

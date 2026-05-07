@@ -16,8 +16,8 @@ export default function App() {
         <Route path="/" element={<ProtectedRoute><QuestionListPage /></ProtectedRoute>} />
         <Route path="/questions/:id" element={<ProtectedRoute><QuestionDetailPage /></ProtectedRoute>} />
         <Route path="/ask" element={<ProtectedRoute><AskQuestionPage /></ProtectedRoute>} />
-        <Route path="/review" element={<ProtectedRoute><ReviewQueuePage /></ProtectedRoute>} />
-        <Route path="/review/:id" element={<ProtectedRoute><ReviewDetailPage /></ProtectedRoute>} />
+        <Route path="/review" element={<ProtectedRoute allowedRoles={['senior', 'admin']}><ReviewQueuePage /></ProtectedRoute>} />
+        <Route path="/review/:id" element={<ProtectedRoute allowedRoles={['senior', 'admin']}><ReviewDetailPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

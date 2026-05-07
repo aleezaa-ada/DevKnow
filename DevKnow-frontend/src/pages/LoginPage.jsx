@@ -15,8 +15,12 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
     try {
-      await login(username, password)
-      navigate('/', { replace: true })
+      const userData = await login(username, password)
+      // Senior and admin users go to the review queue, standard users go to questions
+      const destination = userData.role === 'senior' || userData.role === 'admin'
+        ? '/review'
+        : '/'
+      navigate(destination, { replace: true })
     } catch {
       setError('Invalid username or password.')
     } finally {

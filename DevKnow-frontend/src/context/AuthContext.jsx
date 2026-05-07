@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import api from '../api/client'
 
-const AuthContext = createContext(null)
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthContext = createContext(null)
 
 function restoreSession() {
   const token = localStorage.getItem('access_token')
@@ -27,9 +28,11 @@ export function AuthProvider({ children }) {
     localStorage.setItem('access_token', access)
     localStorage.setItem('refresh_token', refresh)
 
-    // Decode the JWT payload to get basic user info
-    const payload = JSON.parse(atob(access.split('.')[1]))
-    const userData = { id: payload.user_id, username }
+    // Fetch full profile from /auth/me/ to get role
+    const meResponse = await api.get('/auth/me/')
+    const { id, role } = meResponse.data
+    const userData = { id, username, role }
+
     localStorage.setItem('user', JSON.stringify(userData))
     setUser(userData)
 
