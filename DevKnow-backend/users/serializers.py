@@ -13,10 +13,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, min_length=8, required=True)
     password2 = serializers.CharField(write_only=True, label='Confirm password', required=True)
+    role = serializers.ChoiceField(choices=['standard', 'senior'], default='standard')
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password2']
+        fields = ['username', 'email', 'first_name', 'last_name', 'password', 'password2', 'role']
 
     def validate_username(self, value):
         """Ensure username is unique and not empty."""

@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { state } = useLocation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
@@ -32,6 +33,9 @@ export default function LoginPage() {
     <main>
       <h1>DevKnow</h1>
       <h2>Sign in</h2>
+      {state?.successMessage && (
+        <p role="status" style={{ color: 'green' }}>{state.successMessage}</p>
+      )}
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="username">Username</label>
@@ -59,6 +63,9 @@ export default function LoginPage() {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
+      <p>
+        No account? <Link to="/register">Create one</Link>
+      </p>
     </main>
   )
 }
