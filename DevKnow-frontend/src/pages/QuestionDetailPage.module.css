@@ -1,0 +1,101 @@
+/* ── Page shell ─────────────────────────────────────────────────── */
+.container {
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.containerCentered {
+  padding: 1.5rem;
+}
+
+/* ── Question header ─────────────────────────────────────────────── */
+.title {
+  margin-top: 1rem;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.body {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+
+/* ── Shared answer block ─────────────────────────────────────────── */
+.answerBlock {
+  padding: 1rem;
+  border-radius: 4px;
+  margin-top: 1.5rem;
+}
+
+.answerBlock h2 {
+  margin-top: 0;
+}
+
+.answerMeta {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0;
+}
+
+/* ── AI Draft (blue) ─────────────────────────────────────────────── */
+.aiDraft {
+  border: 1px solid #90caf9;
+  background-color: #e3f2fd;
+}
+
+.aiDraft h2 {
+  color: #1565c0;
+}
+
+.aiDisclaimer {
+  font-style: italic;
+  color: #555;
+  font-size: 0.85rem;
+  margin-top: 0;
+}
+
+.aiModel {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 0;
+}
+
+/* ── Approved Answer (green) ─────────────────────────────────────── */
+.approved {
+  border: 1px solid #a5d6a7;
+  background-color: #e8f5e9;
+}
+
+.approved h2 {
+  color: #2e7d32;
+}
+
+/* ── Voting ──────────────────────────────────────────────────────── */
+.voteRow {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.voteError {
+  color: red;
+  margin-top: 0.5rem;
+}
+
+/* ── Pending state ───────────────────────────────────────────────── */
+.pending {
+  color: #888;
+  margin-top: 1.5rem;
+  font-style: italic;
+}
+
+/* ── Error / loading states ──────────────────────────────────────── */
+.fetchError {
+  color: red;
+}

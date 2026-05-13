@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Sum
 from rest_framework import serializers
 
 from .models import AIResponse, ApprovedAnswer, Question, ReviewAction, Tag
@@ -32,14 +33,38 @@ class QuestionListSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'author']
 
 
+class AIResponseSerializer(serializers.ModelSerializer):
+    """Serializer for AI Response."""
+    class Meta:
+        model = AIResponse
+        fields = ['id', 'content', 'model_used', 'approval_status', 'generated_at']
+        read_only_fields = ['id', 'generated_at']
+
+
+class ApprovedAnswerSerializer(serializers.ModelSerializer):
+    """Serializer for Approved Answer (used nested in QuestionDetailSerializer)."""
+    approved_by = UserMinimalSerializer(read_only=True)
+    vote_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ApprovedAnswer
+        fields = ['id', 'final_content', 'approved_by', 'approved_at', 'vote_count']
+        read_only_fields = ['id', 'approved_at']
+
+    def get_vote_count(self, obj):
+        return obj.votes.aggregate(total=Sum('value'))['total'] or 0
+
+
 class QuestionDetailSerializer(serializers.ModelSerializer):
     """Serializer for question detail view."""
     author = UserMinimalSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
+    ai_response = AIResponseSerializer(read_only=True)
+    approved_answer = ApprovedAnswerSerializer(read_only=True)
 
     class Meta:
         model = Question
-        fields = ['id', 'title', 'description', 'author', 'status', 'tags', 'created_at', 'updated_at']
+        fields = ['id', 'title', 'description', 'author', 'status', 'tags', 'created_at', 'updated_at', 'ai_response', 'approved_answer']
         read_only_fields = ['id', 'created_at', 'updated_at', 'author']
 
 
@@ -62,24 +87,6 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
         validated_data['author'] = self.context['request'].user
         return Question.objects.create(**validated_data)
 
-
-class AIResponseSerializer(serializers.ModelSerializer):
-    """Serializer for AI Response."""
-    class Meta:
-        model = AIResponse
-        fields = ['id', 'question', 'content', 'model_used', 'approval_status', 'generated_at']
-        read_only_fields = ['id', 'generated_at']
-
-
-class ApprovedAnswerSerializer(serializers.ModelSerializer):
-    """Serializer for Approved Answer."""
-    approved_by = UserMinimalSerializer(read_only=True)
-    ai_response = AIResponseSerializer(read_only=True)
-
-    class Meta:
-        model = ApprovedAnswer
-        fields = ['id', 'question', 'ai_response', 'approved_by', 'final_content', 'approved_at']
-        read_only_fields = ['id', 'approved_at']
 
 class ReviewActionSerializer(serializers.ModelSerializer):
     class Meta:
