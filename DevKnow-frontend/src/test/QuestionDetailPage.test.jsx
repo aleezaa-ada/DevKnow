@@ -35,7 +35,7 @@ const mockQuestion = {
 const mockQuestionAnswered = {
   ...mockQuestion,
   status: 'answered',
-  ai_response: null,
+  ai_response: { id: 1, content: 'Django ORM uses an active record pattern…', model_used: 'gpt-4o', approval_status: 'approved', generated_at: '2026-05-01T10:01:00Z' },
   approved_answer: {
     id: 5,
     final_content: 'Django ORM is a database-abstraction API…',
@@ -47,6 +47,7 @@ const mockQuestionAnswered = {
 
 // Visitor who is NOT the question author
 const mockAuth = { user: { id: 99, username: 'visitor', role: 'standard' }, login: vi.fn(), logout: vi.fn() }
+const seniorAuth = { user: { id: 99, username: 'reviewer', role: 'senior' }, login: vi.fn(), logout: vi.fn() }
 
 // Helper: renders the page inside a Route so useParams gets the :id
 function renderPage(auth = mockAuth) {
@@ -192,6 +193,88 @@ describe('QuestionDetailPage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByText(/AI response is being generated/i)).toBeInTheDocument()
+    })
+  })
+
+  // ── Edit answer (senior/admin only) ────────────────────────────────────────
+
+  it('shows Edit answer button for senior user viewing an approved answer', async () => {
+    api.get.mockResolvedValue({ data: mockQuestionAnswered })
+    renderPage(seniorAuth)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /edit answer/i })).toBeInTheDocument()
+    })
+  })
+
+  it('does not show Edit answer button for a standard user', async () => {
+    api.get.mockResolvedValue({ data: mockQuestionAnswered })
+    renderPage(mockAuth)
+    await waitFor(() => screen.getByText(/Approved Answer/i))
+    expect(screen.queryByRole('button', { name: /edit answer/i })).not.toBeInTheDocument()
+  })
+
+  it('opens the edit form pre-filled with the current answer when Edit is clicked', async () => {
+    api.get.mockResolvedValue({ data: mockQuestionAnswered })
+    renderPage(seniorAuth)
+    await waitFor(() => screen.getByRole('button', { name: /edit answer/i }))
+    await userEvent.click(screen.getByRole('button', { name: /edit answer/i }))
+
+    const textarea = screen.getByLabelText(/edited answer/i)
+    expect(textarea).toBeInTheDocument()
+    expect(textarea).toHaveValue('Django ORM is a database-abstraction API…')
+  })
+
+  it('submits edit with correct payload and refreshes the answer', async () => {
+    api.get
+      .mockResolvedValueOnce({ data: mockQuestionAnswered })
+      .mockResolvedValueOnce({
+        data: {
+          ...mockQuestionAnswered,
+          approved_answer: { ...mockQuestionAnswered.approved_answer, final_content: 'Updated content' },
+        },
+      })
+    api.post.mockResolvedValue({ data: { status: 'ok', action: 'edited' } })
+
+    renderPage(seniorAuth)
+    await waitFor(() => screen.getByRole('button', { name: /edit answer/i }))
+    await userEvent.click(screen.getByRole('button', { name: /edit answer/i }))
+
+    const textarea = screen.getByLabelText(/edited answer/i)
+    await userEvent.clear(textarea)
+    await userEvent.type(textarea, 'Updated content')
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/questions/1/review/', {
+        action: 'edited',
+        edited_content: 'Updated content',
+        review_notes: '',
+      })
+      expect(screen.getByText('Updated content')).toBeInTheDocument()
+    })
+  })
+
+  it('closes edit form and shows no save button after cancel', async () => {
+    api.get.mockResolvedValue({ data: mockQuestionAnswered })
+    renderPage(seniorAuth)
+    await waitFor(() => screen.getByRole('button', { name: /edit answer/i }))
+    await userEvent.click(screen.getByRole('button', { name: /edit answer/i }))
+    await userEvent.click(screen.getByRole('button', { name: /cancel/i }))
+
+    expect(screen.queryByLabelText(/edited answer/i)).not.toBeInTheDocument()
+  })
+
+  it('shows an error when the edit POST fails', async () => {
+    api.get.mockResolvedValue({ data: mockQuestionAnswered })
+    api.post.mockRejectedValue({ response: { data: { error: 'Permission denied' } } })
+
+    renderPage(seniorAuth)
+    await waitFor(() => screen.getByRole('button', { name: /edit answer/i }))
+    await userEvent.click(screen.getByRole('button', { name: /edit answer/i }))
+    await userEvent.click(screen.getByRole('button', { name: /save changes/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Permission denied')
     })
   })
 })

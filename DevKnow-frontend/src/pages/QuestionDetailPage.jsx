@@ -13,6 +13,11 @@ export default function QuestionDetailPage() {
   const [voteCount, setVoteCount] = useState(null)
   const [voteError, setVoteError] = useState(null)
   const [voting, setVoting] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState('')
+  const [editNotes, setEditNotes] = useState('')
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editError, setEditError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -65,6 +70,37 @@ export default function QuestionDetailPage() {
 
   const { ai_response, approved_answer } = question
   const isOwnQuestion = user?.id === question.author?.id
+  const canEdit = user?.role === 'senior' || user?.role === 'admin'
+
+  function handleStartEdit() {
+    setEditContent(approved_answer.final_content)
+    setEditNotes('')
+    setEditError(null)
+    setEditing(true)
+  }
+
+  async function handleEditSubmit(e) {
+    e.preventDefault()
+    setEditError(null)
+    setEditSubmitting(true)
+    try {
+      await api.post(`/questions/${ai_response.id}/review/`, {
+        action: 'edited',
+        edited_content: editContent,
+        review_notes: editNotes,
+      })
+      // Re-fetch to show the updated answer
+      const res = await api.get(`/questions/${id}/`)
+      setQuestion(res.data)
+      setVoteCount(res.data.approved_answer?.vote_count ?? null)
+      setEditing(false)
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Could not save changes. Please try again.'
+      setEditError(msg)
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
 
   return (
     <main className={styles.container}>
@@ -110,10 +146,53 @@ export default function QuestionDetailPage() {
                 <button onClick={() => handleVote(-1)} disabled={voting} type="button">▼ Downvote</button>
               </>
             )}
+            {canEdit && !editing && (
+              <button onClick={handleStartEdit} type="button" className={styles.editBtn}>
+                ✏ Edit answer
+              </button>
+            )}
           </div>
 
           {voteError && (
             <p role="alert" className={styles.voteError}>{voteError}</p>
+          )}
+
+          {editing && (
+            <form onSubmit={handleEditSubmit} className={styles.editForm}>
+              <div className={styles.editField}>
+                <label htmlFor="edit-content" className={styles.editLabel}>Edited answer</label>
+                <textarea
+                  id="edit-content"
+                  className={styles.editTextarea}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  rows={8}
+                  required
+                />
+              </div>
+              <div className={styles.editField}>
+                <label htmlFor="edit-notes" className={styles.editLabel}>
+                  Review notes <span className={styles.editOptional}>(optional)</span>
+                </label>
+                <textarea
+                  id="edit-notes"
+                  className={styles.editTextarea}
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Internal notes visible to admins only…"
+                />
+              </div>
+              {editError && <p role="alert" className={styles.voteError}>{editError}</p>}
+              <div className={styles.editActions}>
+                <button type="submit" disabled={editSubmitting} className={styles.editSaveBtn}>
+                  {editSubmitting ? 'Saving…' : 'Save changes'}
+                </button>
+                <button type="button" onClick={() => setEditing(false)} disabled={editSubmitting} className={styles.editCancelBtn}>
+                  Cancel
+                </button>
+              </div>
+            </form>
           )}
         </div>
       )}

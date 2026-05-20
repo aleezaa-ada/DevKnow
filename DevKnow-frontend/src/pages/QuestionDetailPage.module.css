@@ -99,3 +99,89 @@
 .fetchError {
   color: red;
 }
+
+/* ── Edit answer (senior/admin only) ─────────────────────────────── */
+.editBtn {
+  margin-left: auto;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #a5d6a7;
+  border-radius: 4px;
+  color: #2e7d32;
+}
+
+.editBtn:hover {
+  background: #f1f8e9;
+}
+
+.editForm {
+  margin-top: 1.25rem;
+  border-top: 1px solid #c8e6c9;
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.editField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.editLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.editOptional {
+  font-weight: 400;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.editActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.editSaveBtn {
+  padding: 0.45rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+
+.editSaveBtn:disabled {
+  background: #90a4ae;
+  cursor: not-allowed;
+}
+
+.editCancelBtn {
+  padding: 0.45rem 1.1rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.editCancelBtn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
