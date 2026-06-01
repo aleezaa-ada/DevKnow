@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import styles from './QuestionDetailPage.module.css'
+import Spinner from '../components/Spinner'
 
 export default function QuestionDetailPage() {
   const { id } = useParams()
@@ -55,7 +56,7 @@ export default function QuestionDetailPage() {
   }
 
   if (loading) {
-    return <main className={styles.containerCentered}><p>Loading question…</p></main>
+    return <main className={styles.containerCentered}><Spinner label="Loading question…" /></main>
   }
 
   if (error) {

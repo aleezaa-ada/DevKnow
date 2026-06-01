@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import api from '../api/client'
 import styles from './SearchResultsPage.module.css'
+import Spinner from '../components/Spinner'
+import EmptyState from '../components/EmptyState'
 
 const STATUS_FILTERS = [
   { label: 'All', value: '' },
@@ -53,7 +55,7 @@ export default function SearchResultsPage() {
     : results
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} aria-busy={loading}>
       <h1 className={styles.heading}>
         {query ? <>Results for <em>"{query}"</em></> : 'Search'}
       </h1>
@@ -74,20 +76,23 @@ export default function SearchResultsPage() {
         </div>
       )}
 
-      {loading && <p>Searching…</p>}
+      {loading && <Spinner label="Searching…" />}
       {error && <p role="alert" className={styles.error}>{error}</p>}
 
-      {/* No query entered */}
+      <div aria-live="polite" aria-atomic="false">
       {!loading && !error && !query.trim() && (
-        <p>Enter a search term in the bar above.</p>
+        <EmptyState icon="🔍" heading="Search for a question" body="Type a term in the search bar above." />
       )}
 
       {/* Query entered but no results */}
       {!loading && !error && query.trim() && results.length === 0 && (
-        <div className={styles.empty}>
-          <p>No questions found for <em>"{query}"</em>.</p>
-          <Link to="/ask" className={styles.askLink}>Ask this question</Link>
-        </div>
+        <EmptyState
+          icon="🤔"
+          heading={`No results for “${query}”`}
+          body="Try different keywords, or ask this as a new question."
+          actionTo="/ask"
+          actionLabel="Ask this question"
+        />
       )}
 
       {/* Results filtered to zero */}
@@ -105,7 +110,7 @@ export default function SearchResultsPage() {
               </Link>
               <div className={styles.meta}>
                 <span>by {q.author?.username}</span>
-                <span className={`${styles.status} ${styles[`status_${q.status}`]}`}>
+                <span className={`status-badge status-badge--${q.status}`}>
                   {q.status.replace('_', ' ')}
                 </span>
                 <span>{new Date(q.created_at).toLocaleDateString()}</span>
@@ -117,6 +122,7 @@ export default function SearchResultsPage() {
           ))}
         </ul>
       )}
+      </div>
     </main>
   )
 }

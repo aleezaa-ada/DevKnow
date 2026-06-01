@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 import styles from './ReviewQueuePage.module.css'
+import Spinner from '../components/Spinner'
+import EmptyState from '../components/EmptyState'
 
 // ── ReviewCard ────────────────────────────────────────────────────────────────
 // Renders a single pending question with inline expand/collapse and review form.
@@ -182,7 +184,7 @@ export default function ReviewQueuePage() {
     setQuestions((prev) => prev.filter((q) => q.id !== questionId))
   }
 
-  if (loading) return <main className={styles.container}><p>Loading review queue…</p></main>
+  if (loading) return <main className={styles.container}><Spinner label="Loading review queue…" /></main>
 
   if (error) {
     return (
@@ -195,19 +197,24 @@ export default function ReviewQueuePage() {
   return (
     <main className={styles.container}>
       <h1>Review Queue</h1>
-      <p className={styles.subtitle}>
-        {questions.length === 0
-          ? 'No pending questions — all caught up.'
-          : `${questions.length} question${questions.length !== 1 ? 's' : ''} awaiting review.`
-        }
-      </p>
 
-      {questions.length > 0 && (
-        <ul className={styles.list}>
-          {questions.map((q) => (
-            <ReviewCard key={q.id} question={q} onReviewed={handleReviewed} />
-          ))}
-        </ul>
+      {questions.length === 0 ? (
+        <EmptyState
+          icon="✅"
+          heading="All caught up"
+          body="No questions are waiting for review right now."
+        />
+      ) : (
+        <>
+          <p className={styles.subtitle}>
+            {questions.length} question{questions.length !== 1 ? 's' : ''} awaiting review.
+          </p>
+          <ul className={styles.list}>
+            {questions.map((q) => (
+              <ReviewCard key={q.id} question={q} onReviewed={handleReviewed} />
+            ))}
+          </ul>
+        </>
       )}
     </main>
   )
