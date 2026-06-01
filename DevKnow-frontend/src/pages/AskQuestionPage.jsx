@@ -67,13 +67,13 @@ export default function AskQuestionPage() {
   }
 
   return (
-    <main style={{ padding: '1.5rem', maxWidth: '700px', margin: '0 auto' }}>
+    <main className="page">
       <h1>Ask a Question</h1>
       <p>Describe your question clearly. An AI response will be generated and reviewed by a senior developer before being published.</p>
 
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="title">Title</label>
+          <label htmlFor="title" className="required">Title</label>
           <input
             id="title"
             type="text"
@@ -87,7 +87,7 @@ export default function AskQuestionPage() {
         </div>
 
         <div>
-          <label htmlFor="description">Description</label>
+          <label htmlFor="description" className="required">Description</label>
           <textarea
             id="description"
             value={description}
@@ -110,7 +110,7 @@ export default function AskQuestionPage() {
           />
         </div>
 
-        {submitError && <p role="alert">{submitError}</p>}
+        {submitError && <p role="alert" className="alert alert--error">{submitError}</p>}
 
         <button type="submit" disabled={loading}>
           {loading ? 'Submitting… AI is generating a response, this may take a moment.' : 'Submit question'}

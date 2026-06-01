@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import LogoutButton from './LogoutButton'
+import styles from './Navbar.module.css'
 
 export default function Navbar() {
   const { user } = useAuth()
@@ -18,34 +19,32 @@ export default function Navbar() {
   }
 
   return (
-    <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1.5rem', borderBottom: '1px solid #e0e0e0' }}>
-      <Link to="/" style={{ fontWeight: 'bold', fontSize: '1.2rem', textDecoration: 'none' }}>
-        DevKnow
-      </Link>
+    <nav className={styles.nav}>
+      <Link to="/" className={styles.brand}>DevKnow</Link>
 
-      <form onSubmit={handleSearch} role="search" style={{ display: 'flex', gap: '0.4rem' }}>
+      <form onSubmit={handleSearch} role="search" className={styles.searchForm}>
         <input
           type="search"
           aria-label="Search questions"
           placeholder="Search questions…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ padding: '0.35rem 0.65rem', borderRadius: '4px', border: '1px solid #ccc', fontSize: '0.9rem', width: '220px' }}
+          className={styles.searchInput}
         />
-        <button type="submit" style={{ padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #ccc', cursor: 'pointer', fontSize: '0.9rem' }}>
+        <button type="button" onClick={handleSearch} className={styles.searchBtn}>
           Search
         </button>
       </form>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <div className={styles.actions}>
         <Link to="/ask">Ask a Question</Link>
 
         {(user?.role === 'senior' || user?.role === 'admin') && (
           <Link to="/review">Review Queue</Link>
         )}
 
-        <span style={{ color: '#555' }}>
-          {user?.username} <span style={{ fontSize: '0.8rem', color: '#888' }}>({user?.role})</span>
+        <span className={styles.userBadge}>
+          {user?.username} <span className={styles.userRole}>({user?.role})</span>
         </span>
 
         <LogoutButton />
