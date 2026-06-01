@@ -35,6 +35,7 @@
   padding: 1rem;
   border-radius: 4px;
   margin-top: 1.5rem;
+  color: #1f2937;
 }
 
 .answerBlock h2 {
@@ -51,6 +52,7 @@
 .aiDraft {
   border: 1px solid #90caf9;
   background-color: #e3f2fd;
+  color: #0f2940;
 }
 
 .aiDraft h2 {
@@ -59,14 +61,14 @@
 
 .aiDisclaimer {
   font-style: italic;
-  color: #555;
+  color: #35546f;
   font-size: 0.85rem;
   margin-top: 0;
 }
 
 .aiModel {
   font-size: 0.8rem;
-  color: #888;
+  color: #4b6480;
   margin-bottom: 0;
 }
 
@@ -74,6 +76,7 @@
 .approved {
   border: 1px solid #a5d6a7;
   background-color: #e8f5e9;
+  color: #1f3a25;
 }
 
 .approved h2 {

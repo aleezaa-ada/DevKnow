@@ -3,6 +3,7 @@ import api from '../api/client'
 import styles from './ReviewQueuePage.module.css'
 import Spinner from '../components/Spinner'
 import EmptyState from '../components/EmptyState'
+import MarkdownContent from '../components/MarkdownContent'
 
 // ── ReviewCard ────────────────────────────────────────────────────────────────
 // Renders a single pending question with inline expand/collapse and review form.
@@ -69,7 +70,7 @@ function ReviewCard({ question, onReviewed }) {
             <p className={styles.aiDisclaimer}>
               ⚠ AI-generated — not yet verified. Review before approving.
             </p>
-            <p className={styles.preWrap}>{question.ai_response?.content}</p>
+            <MarkdownContent content={question.ai_response?.content} className={styles.preWrap} />
             <p className={styles.aiModel}>Model: {question.ai_response?.model_used}</p>
           </section>
 

@@ -96,6 +96,7 @@
 .aiDraft {
   border-color: #90caf9;
   background: #e3f2fd;
+  color: #0f2940;
 }
 
 .aiDraft .sectionHeading {
@@ -105,13 +106,13 @@
 .aiDisclaimer {
   font-style: italic;
   font-size: 0.85rem;
-  color: #555;
+  color: #35546f;
   margin-top: 0;
 }
 
 .aiModel {
   font-size: 0.8rem;
-  color: #888;
+  color: #4b6480;
   margin-bottom: 0;
   margin-top: 0.75rem;
 }
