@@ -16,7 +16,7 @@
 
 .meta {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text);
 }
 
 .body {
@@ -37,7 +37,7 @@
 
 .answerMeta {
   font-size: 0.85rem;
-  color: #555;
+  color: var(--text);
   margin-top: 0;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .voteError {
-  color: red;
+  color: var(--error);
   margin-top: 0.5rem;
 }
 
@@ -97,7 +97,7 @@
 
 /* ── Error / loading states ──────────────────────────────────────── */
 .fetchError {
-  color: red;
+  color: var(--error);
 }
 
 /* ── Edit answer (senior/admin only) ─────────────────────────────── */

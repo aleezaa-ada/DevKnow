@@ -34,11 +34,11 @@ export default function LoginPage() {
       <h1>DevKnow</h1>
       <h2>Sign in</h2>
       {state?.successMessage && (
-        <p role="status" style={{ color: 'green' }}>{state.successMessage}</p>
+        <p role="status" className="alert alert--success">{state.successMessage}</p>
       )}
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username">Username</label>
+          <label htmlFor="username" className="required">Username</label>
           <input
             id="username"
             type="text"
@@ -49,7 +49,7 @@ export default function LoginPage() {
           />
         </div>
         <div>
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password" className="required">Password</label>
           <input
             id="password"
             type="password"
@@ -58,7 +58,7 @@ export default function LoginPage() {
             required
           />
         </div>
-        {error && <p role="alert">{error}</p>}
+        {error && <p role="alert" className="alert alert--error">{error}</p>}
         <button type="submit" disabled={loading}>
           {loading ? 'Signing in…' : 'Sign in'}
         </button>

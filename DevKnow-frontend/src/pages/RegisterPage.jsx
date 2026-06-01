@@ -52,7 +52,7 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit}>
         <div>
-          <label htmlFor="username">Username</label>
+          <label htmlFor="username" className="required">Username</label>
           <input
             id="username"
             name="username"
@@ -66,7 +66,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="email">Email</label>
+          <label htmlFor="email" className="required">Email</label>
           <input
             id="email"
             name="email"
@@ -93,7 +93,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="password">Password</label>
+          <label htmlFor="password" className="required">Password</label>
           <input
             id="password"
             name="password"
@@ -106,7 +106,7 @@ export default function RegisterPage() {
         </div>
 
         <div>
-          <label htmlFor="password2">Confirm password</label>
+          <label htmlFor="password2" className="required">Confirm password</label>
           <input
             id="password2"
             name="password2"
@@ -119,7 +119,7 @@ export default function RegisterPage() {
         </div>
 
         {errors.non_field_errors && (
-          <p role="alert">{errors.non_field_errors}</p>
+          <p role="alert" className="alert alert--error">{errors.non_field_errors}</p>
         )}
 
         <button type="submit" disabled={loading}>
