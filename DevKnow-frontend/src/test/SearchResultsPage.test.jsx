@@ -106,7 +106,7 @@ describe('SearchResultsPage', () => {
     renderSearchPage('?q=unknownterm')
 
     await waitFor(() => {
-      expect(screen.getByText(/no questions found for/i)).toBeInTheDocument()
+      expect(screen.getByText(/no results for/i)).toBeInTheDocument()
       expect(screen.getByRole('link', { name: /ask this question/i })).toBeInTheDocument()
     })
   })
@@ -127,7 +127,7 @@ describe('SearchResultsPage', () => {
     renderSearchPage('')
 
     expect(api.get).not.toHaveBeenCalled()
-    expect(screen.getByText(/enter a search term/i)).toBeInTheDocument()
+    expect(screen.getByText(/search for a question/i)).toBeInTheDocument()
   })
 
   // ── Error state ────────────────────────────────────────────────────────────

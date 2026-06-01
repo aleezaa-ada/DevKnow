@@ -64,7 +64,7 @@ describe('ReviewQueuePage', () => {
     api.get.mockResolvedValue({ data: [] })
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText(/no pending questions/i)).toBeInTheDocument()
+      expect(screen.getByText(/all caught up/i)).toBeInTheDocument()
     })
   })
 

@@ -73,7 +73,7 @@ describe('FeedPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/no questions yet/i)).toBeInTheDocument()
-      expect(screen.getByRole('link', { name: /ask the first one/i })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /ask the first question/i })).toBeInTheDocument()
     })
   })
 
