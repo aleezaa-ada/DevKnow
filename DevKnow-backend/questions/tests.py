@@ -702,6 +702,21 @@ class SearchAPITests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
+    def test_search_short_stopword_query_uses_partial_match_fallback(self):
+        """Short/common terms like 'how' should still return intuitive matches."""
+        response = self.client.get(self.search_url, {'q': 'how'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        titles = [q['title'] for q in response.data]
+        self.assertIn('How to configure Azure CI pipeline', titles)
+        self.assertIn('Python decorators explained', titles)
+
+    def test_search_partial_substring_match(self):
+        """Partial terms should match title/description when full-text yields none."""
+        response = self.client.get(self.search_url, {'q': 'decor'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        titles = [q['title'] for q in response.data]
+        self.assertIn('Python decorators explained', titles)
+
 class VoteAPITests(TestCase):
     """Tests for the voting endpoint."""
  

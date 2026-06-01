@@ -1,0 +1,105 @@
+.page {
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.heading {
+  margin-bottom: 1rem;
+}
+
+/* ── Filter chips ───────────────────────────────────────────── */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.chip {
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.chip:hover {
+  background: #f0f0f0;
+}
+
+.chipActive {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+}
+
+/* ── Results list ───────────────────────────────────────────── */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 1rem 0;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: #1a73e8;
+}
+
+.title:hover {
+  text-decoration: underline;
+}
+
+.meta {
+  margin-top: 0.4rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.status {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status_open        { color: #2e7d32; }
+.status_pending_review { color: #e65100; }
+.status_answered    { color: #0277bd; }
+
+/* ── Empty / error states ───────────────────────────────────── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.askLink {
+  display: inline-block;
+  padding: 0.45rem 1rem;
+  background: #1a73e8;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.askLink:hover {
+  background: #1558b0;
+}
+
+.error {
+  color: #c62828;
+}

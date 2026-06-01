@@ -9,6 +9,7 @@ import QuestionDetailPage from './pages/QuestionDetailPage'
 import AskQuestionPage from './pages/AskQuestionPage'
 import ReviewQueuePage from './pages/ReviewQueuePage'
 import ReviewDetailPage from './pages/ReviewDetailPage'
+import SearchResultsPage from './pages/SearchResultsPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/ask" element={<ProtectedRoute><AskQuestionPage /></ProtectedRoute>} />
         <Route path="/review" element={<ProtectedRoute allowedRoles={['senior', 'admin']}><ReviewQueuePage /></ProtectedRoute>} />
         <Route path="/review/:id" element={<ProtectedRoute allowedRoles={['senior', 'admin']}><ReviewDetailPage /></ProtectedRoute>} />
+        <Route path="/search" element={<ProtectedRoute><SearchResultsPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

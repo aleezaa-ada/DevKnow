@@ -3,6 +3,7 @@ import os
 
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
+from django.db.models import Q
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -213,17 +214,30 @@ class SearchQuestionsView(generics.ListAPIView):
         query = self.request.query_params.get('q', '').strip()
         if not query:
             return Question.objects.none()
-        search_query = SearchQuery(query)
+
+        # Primary path: weighted PostgreSQL full-text search for relevance ranking.
+        search_query = SearchQuery(query, search_type='plain')
         vector = (
             SearchVector('title', weight='A') +
             SearchVector('description', weight='B')
         )
-        return (
+
+        full_text_results = (
             Question.objects
             .annotate(rank=SearchRank(vector, search_query))
             .filter(rank__gte=0.01)
             .order_by('-rank')
         )
+
+        # Fallback path: partial substring matching for short/stop-word queries.
+        # Example: "how" can be ignored by full-text dictionaries but should still
+        # return intuitive results for end users.
+        if full_text_results.exists():
+            return full_text_results
+
+        return Question.objects.filter(
+            Q(title__icontains=query) | Q(description__icontains=query)
+        ).order_by('-created_at')
  
  
 class VoteView(APIView):
