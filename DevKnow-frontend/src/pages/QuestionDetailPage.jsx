@@ -199,11 +199,11 @@ export default function QuestionDetailPage() {
         </div>
       )}
 
-      {/* No AI response yet — question was just submitted */}
+      {/* No AI response — either still generating or generation failed */}
       {!ai_response && !approved_answer && (
-        <p className={styles.pending}>
-          An AI response is being generated and will appear here once reviewed.
-        </p>
+        <div className={styles.aiFailureNotice}>
+          <p>✗ AI response could not be generated. This question is still awaiting a response.</p>
+        </div>
       )}
     </main>
   )

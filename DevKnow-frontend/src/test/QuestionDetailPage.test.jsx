@@ -188,11 +188,11 @@ describe('QuestionDetailPage', () => {
     })
   })
 
-  it('shows a pending AI message when no ai_response or approved_answer exists yet', async () => {
+  it('shows a failure notice when no ai_response or approved_answer exists yet', async () => {
     api.get.mockResolvedValue({ data: { ...mockQuestion, ai_response: null, approved_answer: null } })
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText(/AI response is being generated/i)).toBeInTheDocument()
+      expect(screen.getByText(/AI response could not be generated/i)).toBeInTheDocument()
     })
   })
 

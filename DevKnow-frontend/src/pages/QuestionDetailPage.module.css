@@ -104,6 +104,21 @@
   font-style: italic;
 }
 
+.aiFailureNotice {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #ffebee;
+  border-left: 4px solid var(--error);
+  border-radius: 4px;
+  color: #c62828;
+  font-weight: 500;
+}
+
+.aiFailureNotice p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
 /* ── Error / loading states ──────────────────────────────────────── */
 .fetchError {
   color: var(--error);
