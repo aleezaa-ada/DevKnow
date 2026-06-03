@@ -262,7 +262,8 @@ class QuestionListAPITests(TestCase):
         self.client.force_authenticate(user=self.author)
         response = self.client.get(self.questions_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(response.data['count'], 0)
+        self.assertEqual(len(response.data['results']), 0)
 
     def test_list_questions_returns_questions(self):
         """Test listing questions returns created questions."""
@@ -279,7 +280,8 @@ class QuestionListAPITests(TestCase):
         )
         response = self.client.get(self.questions_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(response.data['count'], 2)
+        self.assertEqual(len(response.data['results']), 2)
 
     def test_list_questions_serializer_fields(self):
         """Test that question list has expected fields."""
@@ -290,8 +292,8 @@ class QuestionListAPITests(TestCase):
             description='This is a test description with sufficient length'
         )
         response = self.client.get(self.questions_url)
-        self.assertIn('id', response.data[0])
-        self.assertIn('title', response.data[0])
+        self.assertIn('id', response.data['results'][0])
+        self.assertIn('title', response.data['results'][0])
 
 
 class QuestionDetailAPITests(TestCase):
@@ -469,15 +471,15 @@ class QuestionFilterAPITests(TestCase):
         """Test filtering questions by status query param."""
         response = self.client.get('/api/questions/?status=open')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['title'], 'Open question')
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['title'], 'Open question')
 
     def test_filter_questions_by_tag(self):
         """Test filtering questions by tag query param."""
         response = self.client.get('/api/questions/?tag=python')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['title'], 'Open question')
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['results'][0]['title'], 'Open question')
 
 
 class QuestionPermissionAPITests(TestCase):

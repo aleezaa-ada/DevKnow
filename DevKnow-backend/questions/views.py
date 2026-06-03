@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector
 from django.db.models import Q
 from rest_framework import generics, permissions, status, viewsets
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,6 +26,12 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
+class QuestionPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
 class QuestionViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Question CRUD operations.
@@ -37,6 +44,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
     """
     queryset = Question.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = QuestionPagination
 
     def get_queryset(self):
         qs = Question.objects.select_related('author').prefetch_related('tags')
