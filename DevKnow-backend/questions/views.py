@@ -248,6 +248,50 @@ class SearchQuestionsView(generics.ListAPIView):
         ).order_by('-created_at')
  
  
+class RetryAIView(APIView):
+    """Re-triggers AI generation for a question whose first attempt failed."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            question = Question.objects.get(pk=pk)
+        except Question.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if question.author != request.user:
+            return Response(
+                {'error': 'You can only retry your own questions.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if hasattr(question, 'ai_response'):
+            return Response(
+                {'error': 'An AI response already exists for this question.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            ai_text = generate_ai_response(question.title, question.description)
+            AIResponse.objects.create(
+                question=question,
+                content=ai_text,
+                model_used=os.getenv('DELOITTE_MODEL', 'gpt-4o'),
+                approval_status=AIResponse.STATUS_PENDING,
+            )
+            question.status = Question.STATUS_PENDING
+            question.save()
+            return Response({'status': 'ok'})
+        except Exception:
+            logger.exception(
+                'AI generation retry failed',
+                extra={'question_id': question.id, 'author_id': question.author_id},
+            )
+            return Response(
+                {'error': 'AI generation failed. Please try again later.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+
 class VoteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
  

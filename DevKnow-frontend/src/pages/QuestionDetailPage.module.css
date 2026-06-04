@@ -9,6 +9,34 @@
   padding: 1.5rem;
 }
 
+/* ── Top bar (back link + delete button) ─────────────────────────── */
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.deleteBtn {
+  padding: 0.3rem 0.85rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #ef9a9a;
+  border-radius: 4px;
+  color: #c62828;
+}
+
+.deleteBtn:hover:not(:disabled) {
+  background: #ffebee;
+}
+
+.deleteBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ── Question header ─────────────────────────────────────────────── */
 .title {
   margin-top: 1rem;
@@ -117,6 +145,33 @@
 .aiFailureNotice p {
   margin: 0;
   font-size: 0.95rem;
+}
+
+.retryRow {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.retryBtn {
+  padding: 0.35rem 0.9rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: #c62828;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+
+.retryBtn:hover:not(:disabled) {
+  background: #b71c1c;
+}
+
+.retryBtn:disabled {
+  background: #90a4ae;
+  cursor: not-allowed;
 }
 
 /* ── Error / loading states ──────────────────────────────────────── */

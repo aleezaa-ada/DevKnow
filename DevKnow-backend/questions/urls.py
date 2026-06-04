@@ -5,6 +5,7 @@ from .views import (
     AIResponseViewSet,
     PendingReviewListView,
     QuestionViewSet,
+    RetryAIView,
     ReviewAnswerView,
     SearchQuestionsView,
     TagViewSet,
@@ -20,6 +21,7 @@ urlpatterns = [
     path('questions/review/', PendingReviewListView.as_view(), name='pending-review'),
     path('questions/search/', SearchQuestionsView.as_view(), name='search'),
     path('questions/<int:pk>/review/', ReviewAnswerView.as_view(), name='review-answer'),
+    path('questions/<int:pk>/retry-ai/', RetryAIView.as_view(), name='retry-ai'),
     path('questions/answers/<int:pk>/vote/', VoteView.as_view(), name='vote'),
     path('', include(router.urls)),
 ]

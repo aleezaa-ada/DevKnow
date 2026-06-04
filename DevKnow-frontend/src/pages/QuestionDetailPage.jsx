@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import api from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import styles from './QuestionDetailPage.module.css'
@@ -9,6 +9,7 @@ import MarkdownContent from '../components/MarkdownContent'
 export default function QuestionDetailPage() {
   const { id } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [question, setQuestion] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -20,6 +21,10 @@ export default function QuestionDetailPage() {
   const [editNotes, setEditNotes] = useState('')
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
+  const [retrying, setRetrying] = useState(false)
+  const [retryError, setRetryError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -53,6 +58,36 @@ export default function QuestionDetailPage() {
       setVoteError(msg)
     } finally {
       setVoting(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!window.confirm('Are you sure you want to delete this question? This cannot be undone.')) return
+    setDeleting(true)
+    setDeleteError(null)
+    try {
+      await api.delete(`/questions/${id}/`)
+      navigate('/', { replace: true })
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Could not delete question. Please try again.'
+      setDeleteError(msg)
+      setDeleting(false)
+    }
+  }
+
+  async function handleRetry() {
+    setRetrying(true)
+    setRetryError(null)
+    try {
+      await api.post(`/questions/${id}/retry-ai/`)
+      const res = await api.get(`/questions/${id}/`)
+      setQuestion(res.data)
+      setVoteCount(res.data.approved_answer?.vote_count ?? null)
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Could not reach AI. Please try again later.'
+      setRetryError(msg)
+    } finally {
+      setRetrying(false)
     }
   }
 
@@ -106,7 +141,21 @@ export default function QuestionDetailPage() {
 
   return (
     <main className={styles.container}>
-      <Link to="/">← Back to questions</Link>
+      <div className={styles.topBar}>
+        <Link to="/">← Back to questions</Link>
+        {isOwnQuestion && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className={styles.deleteBtn}
+          >
+            {deleting ? 'Deleting…' : 'Delete question'}
+          </button>
+        )}
+      </div>
+
+      {deleteError && <p role="alert" className={styles.voteError}>{deleteError}</p>}
 
       <h1 className={styles.title}>{question.title}</h1>
 
@@ -203,6 +252,19 @@ export default function QuestionDetailPage() {
       {!ai_response && !approved_answer && (
         <div className={styles.aiFailureNotice}>
           <p>✗ AI response could not be generated. This question is still awaiting a response.</p>
+          {isOwnQuestion && (
+            <div className={styles.retryRow}>
+              <button
+                type="button"
+                onClick={handleRetry}
+                disabled={retrying}
+                className={styles.retryBtn}
+              >
+                {retrying ? 'Retrying…' : '↻ Retry AI generation'}
+              </button>
+              {retryError && <p role="alert" className={styles.voteError}>{retryError}</p>}
+            </div>
+          )}
         </div>
       )}
     </main>
