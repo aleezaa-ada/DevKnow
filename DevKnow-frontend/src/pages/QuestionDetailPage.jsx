@@ -248,7 +248,27 @@ export default function QuestionDetailPage() {
         </div>
       )}
 
-      {/* No AI response — either still generating or generation failed */}
+      {/* Rejected AI response notice */}
+      {ai_response?.approval_status === 'rejected' && !approved_answer && (
+        <div className={styles.rejectedNotice}>
+          <p>✗ The AI-generated response for this question was rejected by a senior developer and will not be published.</p>
+          {isOwnQuestion && (
+            <div className={styles.retryRow}>
+              <button
+                type="button"
+                onClick={handleRetry}
+                disabled={retrying}
+                className={styles.retryBtn}
+              >
+                {retrying ? 'Retrying…' : '↻ Request a new AI response'}
+              </button>
+              {retryError && <p role="alert" className={styles.voteError}>{retryError}</p>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* No AI response — generation failed at question creation time */}
       {!ai_response && !approved_answer && (
         <div className={styles.aiFailureNotice}>
           <p>✗ AI response could not be generated. This question is still awaiting a response.</p>

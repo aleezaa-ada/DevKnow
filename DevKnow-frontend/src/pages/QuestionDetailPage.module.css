@@ -147,6 +147,21 @@
   font-size: 0.95rem;
 }
 
+.rejectedNotice {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: var(--warning-bg);
+  border-left: 4px solid var(--warning-border);
+  border-radius: 4px;
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.rejectedNotice p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
 .retryRow {
   margin-top: 0.75rem;
   display: flex;

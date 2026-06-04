@@ -264,11 +264,15 @@ class RetryAIView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        if hasattr(question, 'ai_response'):
+        if hasattr(question, 'ai_response') and question.ai_response.approval_status != AIResponse.STATUS_REJECTED:
             return Response(
                 {'error': 'An AI response already exists for this question.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # If a rejected response exists, delete it so a fresh one can be created
+        if hasattr(question, 'ai_response'):
+            question.ai_response.delete()
 
         try:
             ai_text = generate_ai_response(question.title, question.description)
