@@ -26,6 +26,7 @@ export default defineConfig([
         ...globals.mocha,
         cy: 'readonly',
         Cypress: 'readonly',
+        expect: 'readonly',
       },
     },
   },
