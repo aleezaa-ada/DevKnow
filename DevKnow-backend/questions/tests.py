@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
-from rest_framework.test import APIClient
+from rest_framework.test import APIClient, APITestCase
 
 from .models import AIResponse, ApprovedAnswer, Question, Tag
 
@@ -777,3 +777,88 @@ class VoteAPITests(TestCase):
         self.client.force_authenticate(user=self.voter)
         response = self.client.post(self.vote_url, {'value': 5}, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class EndToEndIntegrationAPITests(APITestCase):
+    """Integration tests for full user flow across auth + questions + review."""
+
+    def test_register_login_submit_approve_flow(self):
+        # 1) Register standard user.
+        standard_register = {
+            'username': 'flow_standard',
+            'email': 'flow_standard@example.com',
+            'first_name': 'Flow',
+            'last_name': 'Standard',
+            'password': 'pass12345',
+            'password2': 'pass12345',
+            'role': 'standard',
+        }
+        reg_response = self.client.post('/api/auth/register/', standard_register, format='json')
+        self.assertEqual(reg_response.status_code, status.HTTP_201_CREATED)
+
+        # 2) Login standard user and submit question.
+        standard_login = self.client.post(
+            '/api/auth/login/',
+            {'username': 'flow_standard', 'password': 'pass12345'},
+            format='json',
+        )
+        self.assertEqual(standard_login.status_code, status.HTTP_200_OK)
+        standard_token = standard_login.data['access']
+
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {standard_token}')
+        question_payload = {
+            'title': 'How do I configure CI for Django?',
+            'description': 'Need a practical workflow for lint, tests, and deployment.',
+            'tag_names': ['django', 'ci'],
+        }
+
+        from unittest.mock import patch
+
+        with patch('questions.views.generate_ai_response', return_value='Mocked integration AI answer'):
+            create_question = self.client.post('/api/questions/', question_payload, format='json')
+
+        self.assertEqual(create_question.status_code, status.HTTP_201_CREATED)
+        question = Question.objects.get(pk=create_question.data['id'])
+        ai_response = AIResponse.objects.get(question=question)
+        self.assertEqual(question.status, Question.STATUS_PENDING)
+        self.assertEqual(ai_response.approval_status, AIResponse.STATUS_PENDING)
+
+        # 3) Register and login senior user.
+        self.client.credentials()
+        senior_register = {
+            'username': 'flow_senior',
+            'email': 'flow_senior@example.com',
+            'first_name': 'Flow',
+            'last_name': 'Senior',
+            'password': 'pass12345',
+            'password2': 'pass12345',
+            'role': 'senior',
+        }
+        senior_reg_response = self.client.post('/api/auth/register/', senior_register, format='json')
+        self.assertEqual(senior_reg_response.status_code, status.HTTP_201_CREATED)
+
+        senior_login = self.client.post(
+            '/api/auth/login/',
+            {'username': 'flow_senior', 'password': 'pass12345'},
+            format='json',
+        )
+        self.assertEqual(senior_login.status_code, status.HTTP_200_OK)
+        senior_token = senior_login.data['access']
+
+        # 4) Approve AI response as senior.
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {senior_token}')
+        review_response = self.client.post(
+            f'/api/questions/{ai_response.id}/review/',
+            {'action': 'approved', 'review_notes': 'Looks good for publish.'},
+            format='json',
+        )
+        self.assertEqual(review_response.status_code, status.HTTP_200_OK)
+
+        # 5) Verify final state.
+        question.refresh_from_db()
+        ai_response.refresh_from_db()
+        self.assertEqual(question.status, Question.STATUS_ANSWERED)
+        self.assertEqual(ai_response.approval_status, AIResponse.STATUS_APPROVED)
+
+        approved_answer = ApprovedAnswer.objects.get(question=question)
+        self.assertEqual(approved_answer.final_content, 'Mocked integration AI answer')
