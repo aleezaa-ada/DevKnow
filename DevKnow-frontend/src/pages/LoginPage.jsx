@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import styles from './LoginPage.module.css'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -30,14 +31,14 @@ export default function LoginPage() {
   }
 
   return (
-    <main>
-      <h1>DevKnow</h1>
-      <h2>Sign in</h2>
+    <main className={styles.container}>
+      <h1 className={styles.brand}>DevKnow</h1>
+      <h2 className={styles.heading}>Sign in</h2>
       {state?.successMessage && (
         <p role="status" className="alert alert--success">{state.successMessage}</p>
       )}
-      <form onSubmit={handleSubmit}>
-        <div>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.field}>
           <label htmlFor="username" className="required">Username</label>
           <input
             id="username"
@@ -48,7 +49,7 @@ export default function LoginPage() {
             autoFocus
           />
         </div>
-        <div>
+        <div className={styles.field}>
           <label htmlFor="password" className="required">Password</label>
           <input
             id="password"
@@ -63,7 +64,7 @@ export default function LoginPage() {
           {loading ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
-      <p>
+      <p className={styles.footer}>
         No account? <Link to="/register">Create one</Link>
       </p>
     </main>

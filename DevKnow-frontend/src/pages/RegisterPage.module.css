@@ -1,0 +1,40 @@
+.container {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+}
+
+.brand {
+  margin: 0;
+}
+
+.heading {
+  margin: var(--space-5) 0 var(--space-6);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.field {
+  margin: 0;
+}
+
+.field label {
+  margin-bottom: var(--space-2);
+}
+
+.form button[type='submit'] {
+  justify-self: start;
+}
+
+.authSwitch {
+  margin-top: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-6) var(--space-4);
+  }
+}

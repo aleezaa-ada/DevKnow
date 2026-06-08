@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/client'
+import styles from './RegisterPage.module.css'
 
 export default function RegisterPage() {
   const navigate = useNavigate()
@@ -46,12 +47,12 @@ export default function RegisterPage() {
   }
 
   return (
-    <main>
-      <h1>DevKnow</h1>
-      <h2>Create an account</h2>
+    <main className={styles.container}>
+      <h1 className={styles.brand}>DevKnow</h1>
+      <h2 className={styles.heading}>Create an account</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.field}>
           <label htmlFor="username" className="required">Username</label>
           <input
             id="username"
@@ -65,7 +66,7 @@ export default function RegisterPage() {
           {errors.username && <p role="alert">{errors.username}</p>}
         </div>
 
-        <div>
+        <div className={styles.field}>
           <label htmlFor="email" className="required">Email</label>
           <input
             id="email"
@@ -78,7 +79,7 @@ export default function RegisterPage() {
           {errors.email && <p role="alert">{errors.email}</p>}
         </div>
 
-        <div>
+        <div className={styles.field}>
           <label htmlFor="role">I am joining as</label>
           <select
             id="role"
@@ -92,7 +93,7 @@ export default function RegisterPage() {
           {errors.role && <p role="alert">{errors.role}</p>}
         </div>
 
-        <div>
+        <div className={styles.field}>
           <label htmlFor="password" className="required">Password</label>
           <input
             id="password"
@@ -105,7 +106,7 @@ export default function RegisterPage() {
           {errors.password && <p role="alert">{errors.password}</p>}
         </div>
 
-        <div>
+        <div className={styles.field}>
           <label htmlFor="password2" className="required">Confirm password</label>
           <input
             id="password2"
@@ -127,7 +128,7 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <p>
+      <p className={styles.authSwitch}>
         Already have an account? <Link to="/login">Sign in</Link>
       </p>
     </main>
