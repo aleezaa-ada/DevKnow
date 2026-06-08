@@ -8,5 +8,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.js'],
     globals: true,
+    coverage: {
+      reporter: ['text', 'html', 'json', 'clover'],
+      exclude: ['**/*.css', '**/*.module.css'],
+    },
   },
 })
