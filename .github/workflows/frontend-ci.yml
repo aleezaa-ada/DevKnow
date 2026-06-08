@@ -1,13 +1,16 @@
 name: Frontend CI
 
 on:
+  workflow_dispatch:
   push:
     branches: ["main"]
     paths:
       - "DevKnow-frontend/**"
+      - ".github/workflows/frontend-ci.yml"
   pull_request:
     paths:
       - "DevKnow-frontend/**"
+      - ".github/workflows/frontend-ci.yml"
 
 jobs:
   lint-and-build:
@@ -111,8 +114,8 @@ jobs:
 
       - name: Wait for servers to be ready
         run: |
-          npx wait-on http://localhost:8000/api/auth/login/ --timeout 30000
-          npx wait-on http://localhost:5173 --timeout 30000
+          npx wait-on tcp:127.0.0.1:8000 --timeout 60000
+          npx wait-on http://localhost:5173 --timeout 60000
         working-directory: DevKnow-frontend
 
       - name: Run Cypress E2E tests
