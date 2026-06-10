@@ -29,6 +29,8 @@ describe('AskQuestionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
+    localStorage.clear()
+    localStorage.setItem('user', JSON.stringify({ id: 1, username: 'asker', role: 'standard' }))
   })
 
   it('renders title, description, tags fields and submit button', () => {
@@ -132,5 +134,43 @@ describe('AskQuestionPage', () => {
     const btn = screen.getByRole('button')
     expect(btn).toBeDisabled()
     expect(btn).toHaveTextContent(/submitting/i)
+  })
+
+  it('does not navigate when a late success response resolves after unmount', async () => {
+    let resolvePost
+    api.post.mockImplementation(() => new Promise((resolve) => {
+      resolvePost = resolve
+    }))
+
+    const { unmount } = renderPage()
+
+    await userEvent.type(screen.getByLabelText('Title'), 'A valid title here')
+    await userEvent.type(screen.getByLabelText(/description/i), 'This description is definitely long enough.')
+    await userEvent.click(screen.getByRole('button', { name: /submit question/i }))
+
+    unmount()
+    resolvePost({ data: { id: 777 } })
+    await Promise.resolve()
+
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
+  it('does not navigate if logged-in user changes before submit resolves', async () => {
+    let resolvePost
+    api.post.mockImplementation(() => new Promise((resolve) => {
+      resolvePost = resolve
+    }))
+
+    renderPage()
+
+    await userEvent.type(screen.getByLabelText('Title'), 'A valid title here')
+    await userEvent.type(screen.getByLabelText(/description/i), 'This description is definitely long enough.')
+    await userEvent.click(screen.getByRole('button', { name: /submit question/i }))
+
+    localStorage.setItem('user', JSON.stringify({ id: 2, username: 'other', role: 'senior' }))
+    resolvePost({ data: { id: 900 } })
+    await Promise.resolve()
+
+    expect(mockNavigate).not.toHaveBeenCalled()
   })
 })

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../api/client'
 
@@ -6,14 +6,34 @@ import api from '../api/client'
 const MIN_TITLE_LENGTH = 5
 const MIN_DESC_LENGTH = 10
 
+function getCurrentUserId() {
+  const rawUser = localStorage.getItem('user')
+  if (!rawUser) return null
+
+  try {
+    const parsed = JSON.parse(rawUser)
+    return parsed?.id ?? null
+  } catch {
+    return null
+  }
+}
+
 export default function AskQuestionPage() {
   const navigate = useNavigate()
+  const isMountedRef = useRef(true)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [tagsInput, setTagsInput] = useState('')   // comma-separated string
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [submitError, setSubmitError] = useState(null)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   // Client-side validation - returns error map, empty object means valid
   function validate() {
@@ -30,6 +50,7 @@ export default function AskQuestionPage() {
   async function handleSubmit(e) {
     e.preventDefault()
     setSubmitError(null)
+    const submitterUserId = getCurrentUserId()
 
     const clientErrors = validate()
     if (Object.keys(clientErrors).length > 0) {
@@ -48,8 +69,11 @@ export default function AskQuestionPage() {
 
     try {
       const res = await api.post('/questions/', { title: title.trim(), description: description.trim(), tag_names })
+      if (!isMountedRef.current) return
+      if (submitterUserId === null || getCurrentUserId() !== submitterUserId) return
       navigate(`/questions/${res.data.id}`)
     } catch (err) {
+      if (!isMountedRef.current) return
       const data = err.response?.data
       if (data && typeof data === 'object') {
         // Map DRF field errors back to individual fields
@@ -62,7 +86,9 @@ export default function AskQuestionPage() {
         setSubmitError('Something went wrong. Please try again.')
       }
     } finally {
-      setLoading(false)
+      if (isMountedRef.current) {
+        setLoading(false)
+      }
     }
   }
 
