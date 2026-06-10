@@ -1,8 +1,11 @@
 from django.contrib.auth import get_user_model
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+from .throttles import LoginRateThrottle, RegisterRateThrottle
 
 User = get_user_model()
 
@@ -19,6 +22,8 @@ class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [RegisterRateThrottle]
+    throttle_scope = 'register'
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -49,3 +54,22 @@ class MeView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class SanitizedTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Sanitize login payload before passing credentials to JWT auth logic."""
+
+    def validate(self, attrs):
+        login_data = LoginSerializer(data=attrs)
+        login_data.is_valid(raise_exception=True)
+        cleaned = login_data.validated_data
+        return super().validate(cleaned)
+
+
+class LoginView(TokenObtainPairView):
+    """JWT login endpoint with request throttling and input sanitization."""
+
+    serializer_class = SanitizedTokenObtainPairSerializer
+    permission_classes = [permissions.AllowAny]
+    throttle_classes = [LoginRateThrottle]
+    throttle_scope = 'login'

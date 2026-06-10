@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/client'
 import styles from './RegisterPage.module.css'
 
+const USERNAME_MIN_LENGTH = 3
+const USERNAME_MAX_LENGTH = 30
+const USERNAME_REGEX = /^[A-Za-z0-9_.-]+$/
+
 export default function RegisterPage() {
   const navigate = useNavigate()
   const [fields, setFields] = useState({
@@ -10,7 +14,6 @@ export default function RegisterPage() {
     email: '',
     password: '',
     password2: '',
-    role: 'standard',
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
@@ -21,13 +24,45 @@ export default function RegisterPage() {
     setErrors((prev) => ({ ...prev, [e.target.name]: undefined }))
   }
 
+  function validate() {
+    const nextErrors = {}
+    const username = fields.username.trim()
+
+    if (username.length < USERNAME_MIN_LENGTH) {
+      nextErrors.username = `Username must be at least ${USERNAME_MIN_LENGTH} characters.`
+    } else if (username.length > USERNAME_MAX_LENGTH) {
+      nextErrors.username = `Username must be at most ${USERNAME_MAX_LENGTH} characters.`
+    } else if (!USERNAME_REGEX.test(username)) {
+      nextErrors.username = 'Username can only contain letters, numbers, dots, underscores, and hyphens.'
+    }
+
+    if (fields.password !== fields.password2) {
+      nextErrors.password2 = 'Passwords do not match'
+    }
+
+    return nextErrors
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
+    const clientErrors = validate()
+    if (Object.keys(clientErrors).length > 0) {
+      setErrors(clientErrors)
+      return
+    }
+
     setErrors({})
     setLoading(true)
 
+    const payload = {
+      username: fields.username.trim(),
+      email: fields.email.trim().toLowerCase(),
+      password: fields.password,
+      password2: fields.password2,
+    }
+
     try {
-      await api.post('/auth/register/', fields)
+      await api.post('/auth/register/', payload)
       navigate('/login', { state: { successMessage: 'Account created! Please sign in.' } })
     } catch (err) {
       const data = err.response?.data
@@ -60,6 +95,9 @@ export default function RegisterPage() {
             type="text"
             value={fields.username}
             onChange={handleChange}
+            minLength={USERNAME_MIN_LENGTH}
+            maxLength={USERNAME_MAX_LENGTH}
+            pattern="[A-Za-z0-9_.-]+"
             required
             autoFocus
           />
@@ -77,20 +115,7 @@ export default function RegisterPage() {
             required
           />
           {errors.email && <p role="alert">{errors.email}</p>}
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="role">I am joining as</label>
-          <select
-            id="role"
-            name="role"
-            value={fields.role}
-            onChange={handleChange}
-          >
-            <option value="standard">Standard Developer</option>
-            <option value="senior">Senior Developer</option>
-          </select>
-          {errors.role && <p role="alert">{errors.role}</p>}
+          <p className={styles.fieldHint}>Senior developers: use your pre-approved email to receive senior access automatically.</p>
         </div>
 
         <div className={styles.field}>

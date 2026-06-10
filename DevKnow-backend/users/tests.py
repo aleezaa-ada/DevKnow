@@ -3,6 +3,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from users.models import ApprovedSeniorEmail
+
 User = get_user_model()
 
 
@@ -152,6 +154,76 @@ class RegisterAPITests(TestCase):
         data['username'] = ''
         response = self.client.post(self.register_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_username_too_short(self):
+        """Test registration fails when username is shorter than minimum length."""
+        data = self.valid_data.copy()
+        data['username'] = 'ab'
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('at least 3 characters', str(response.data))
+
+    def test_register_username_invalid_characters(self):
+        """Test registration fails with unsupported characters in username."""
+        data = self.valid_data.copy()
+        data['username'] = 'new user!'
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('only contain letters, numbers', str(response.data))
+
+    def test_register_ignores_requested_privileged_role(self):
+        """Test registration cannot self-assign elevated roles — role is always set server-side."""
+        data = self.valid_data.copy()
+        data['role'] = 'senior'
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # No approved email in the list, so should be standard regardless
+        self.assertEqual(response.data['user']['role'], 'standard')
+
+    def test_register_with_approved_email_gets_senior_role(self):
+        """Test user gets senior role automatically when email is pre-approved."""
+        ApprovedSeniorEmail.objects.create(email='senior@example.com')
+        data = self.valid_data.copy()
+        data['email'] = 'senior@example.com'
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['user']['role'], 'senior')
+
+    def test_register_without_approved_email_gets_standard_role(self):
+        """Test user gets standard role when email is not pre-approved."""
+        response = self.client.post(self.register_url, self.valid_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['user']['role'], 'standard')
+
+    def test_register_approved_email_case_insensitive(self):
+        """Test pre-approved email match is case-insensitive."""
+        ApprovedSeniorEmail.objects.create(email='Senior@Example.COM')
+        data = self.valid_data.copy()
+        data['email'] = 'senior@example.com'
+        response = self.client.post(self.register_url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['user']['role'], 'senior')
+
+
+class LoginAPITests(TestCase):
+    """Tests for login endpoint hardening."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.login_url = '/api/auth/login/'
+        self.user = User.objects.create_user(
+            username='devlogin',
+            email='devlogin@example.com',
+            password='securepass123',
+        )
+
+    def test_login_trims_username_whitespace(self):
+        """Test login accepts usernames padded with spaces."""
+        payload = {'username': '  devlogin  ', 'password': 'securepass123'}
+        response = self.client.post(self.login_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
 
 
 class MeAPITests(TestCase):

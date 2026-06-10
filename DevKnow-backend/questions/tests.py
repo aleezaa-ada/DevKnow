@@ -3,6 +3,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
+from users.models import ApprovedSeniorEmail
+
 from .models import AIResponse, ApprovedAnswer, Question, Tag
 
 User = get_user_model()
@@ -824,7 +826,9 @@ class EndToEndIntegrationAPITests(APITestCase):
         self.assertEqual(ai_response.approval_status, AIResponse.STATUS_PENDING)
 
         # 3) Register and login senior user.
+        # Pre-approve the email so the registration auto-assigns senior role.
         self.client.credentials()
+        ApprovedSeniorEmail.objects.create(email='flow_senior@example.com')
         senior_register = {
             'username': 'flow_senior',
             'email': 'flow_senior@example.com',
@@ -832,10 +836,10 @@ class EndToEndIntegrationAPITests(APITestCase):
             'last_name': 'Senior',
             'password': 'pass12345',
             'password2': 'pass12345',
-            'role': 'senior',
         }
         senior_reg_response = self.client.post('/api/auth/register/', senior_register, format='json')
         self.assertEqual(senior_reg_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(senior_reg_response.data['user']['role'], 'senior')
 
         senior_login = self.client.post(
             '/api/auth/login/',

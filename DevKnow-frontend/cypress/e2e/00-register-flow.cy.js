@@ -1,8 +1,25 @@
 describe('Register flow', () => {
+  it('does not expose role selection and shows senior onboarding guidance', () => {
+    cy.visit('/register')
+
+    cy.get('#role').should('not.exist')
+    cy.contains('Senior developers: use your pre-approved email to receive senior access automatically.').should('be.visible')
+  })
+
   it('successfully registers and is redirected to login with success message', () => {
-    cy.intercept('POST', '**/api/auth/register/**', {
-      statusCode: 201,
-      body: { message: 'User created successfully', user: { username: 'new_e2e_user' } },
+    cy.intercept('POST', '**/api/auth/register/**', (req) => {
+      expect(req.body).to.include({
+        username: 'new_e2e_user',
+        email: 'new_e2e_user@example.com',
+        password: 'securepass1',
+        password2: 'securepass1',
+      })
+      expect(req.body).to.not.have.property('role')
+
+      req.reply({
+        statusCode: 201,
+        body: { message: 'User created successfully', user: { username: 'new_e2e_user', role: 'standard' } },
+      })
     }).as('register')
 
     cy.visit('/register')

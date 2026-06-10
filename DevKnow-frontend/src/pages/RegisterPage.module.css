@@ -33,6 +33,12 @@
   margin-top: var(--space-4);
 }
 
+.fieldHint {
+  margin: var(--space-1) 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #666);
+}
+
 @media (max-width: 640px) {
   .container {
     padding: var(--space-6) var(--space-4);

@@ -42,7 +42,7 @@ describe('LoginPage', () => {
     const loginMock = vi.fn().mockResolvedValue({ role: 'standard', id: 1, username: 'dev' })
     renderLoginPage(loginMock)
 
-    await userEvent.type(screen.getByLabelText('Username'), 'dev')
+    await userEvent.type(screen.getByLabelText('Username'), '  dev  ')
     await userEvent.type(screen.getByLabelText('Password'), 'pass123')
     await userEvent.click(screen.getByRole('button', { name: /sign in/i }))
 

@@ -3,6 +3,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import styles from './LoginPage.module.css'
 
+const USERNAME_MIN_LENGTH = 3
+const USERNAME_MAX_LENGTH = 30
+
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -17,7 +20,8 @@ export default function LoginPage() {
     setError(null)
     setLoading(true)
     try {
-      const userData = await login(username, password)
+      const sanitizedUsername = username.trim()
+      const userData = await login(sanitizedUsername, password)
       // Senior and admin users go to the review queue, standard users go to questions
       const destination = userData.role === 'senior' || userData.role === 'admin'
         ? '/review'
@@ -45,6 +49,8 @@ export default function LoginPage() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            minLength={USERNAME_MIN_LENGTH}
+            maxLength={USERNAME_MAX_LENGTH}
             required
             autoFocus
           />

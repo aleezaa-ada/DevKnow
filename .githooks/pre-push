@@ -29,7 +29,7 @@ if ! "$PYTHON_BIN" -m ruff check .; then
 fi
 
 echo "[pre-push] Running Django tests..."
-if ! "$PYTHON_BIN" manage.py test --verbosity=1 --keepdb --parallel auto; then
+if ! "$PYTHON_BIN" manage.py test --verbosity=1 --parallel auto --noinput; then
   echo "[pre-push] Tests failed. Fix tests before pushing."
   exit 1
 fi

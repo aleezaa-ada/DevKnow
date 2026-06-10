@@ -65,7 +65,6 @@ describe('RegisterPage', () => {
         email: 'new@example.com',
         password: 'securepass1',
         password2: 'securepass1',
-        role: 'standard',
       })
     })
   })
@@ -102,6 +101,19 @@ describe('RegisterPage', () => {
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('A user with this username already exists.')
     })
+  })
+
+  it('shows a client-side error for usernames shorter than 3 characters', async () => {
+    renderRegisterPage()
+
+    await userEvent.type(screen.getByLabelText('Username'), 'ab')
+    await userEvent.type(screen.getByLabelText('Email'), 'short@example.com')
+    await userEvent.type(screen.getByLabelText('Password'), 'securepass1')
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'securepass1')
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Username must be at least 3 characters.')
+    expect(api.post).not.toHaveBeenCalled()
   })
 
   it('shows a generic error when the API fails without field errors', async () => {
