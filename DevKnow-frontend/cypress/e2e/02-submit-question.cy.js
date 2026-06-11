@@ -50,6 +50,7 @@ describe('Submit question flow', () => {
     cy.wait('@login')
     cy.wait('@me')
     cy.wait('@feed')
+    cy.acceptTermsIfPresent()
 
     cy.contains('a', 'Ask a Question').click()
     cy.contains('h1', 'Ask a Question').should('be.visible')

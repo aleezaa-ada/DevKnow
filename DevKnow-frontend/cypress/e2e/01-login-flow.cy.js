@@ -26,6 +26,7 @@ describe('Login flow', () => {
     cy.wait('@login')
     cy.wait('@me')
     cy.wait('@questions')
+    cy.acceptTermsIfPresent()
 
     cy.contains('h1', 'Questions').should('be.visible')
     cy.url().should('include', '/')

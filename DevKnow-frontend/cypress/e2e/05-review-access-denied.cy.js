@@ -26,6 +26,7 @@ describe('Review access control flow', () => {
     cy.wait('@login')
     cy.wait('@me')
     cy.wait('@feed')
+    cy.acceptTermsIfPresent()
 
     cy.visit('/review')
 

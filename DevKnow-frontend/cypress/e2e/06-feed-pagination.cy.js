@@ -66,6 +66,7 @@ describe('Feed pagination flow', () => {
     cy.wait('@login')
     cy.wait('@me')
     cy.wait('@questions')
+    cy.acceptTermsIfPresent()
 
     cy.contains('Page 1 Question').should('be.visible')
     cy.contains('Page 2 Question').should('not.exist')

@@ -32,6 +32,7 @@ describe('Negative critical flows', () => {
     cy.wait('@login')
     cy.wait('@me')
     cy.wait('@feed')
+    cy.acceptTermsIfPresent()
 
     cy.contains('a', 'Ask a Question').click()
     cy.contains('h1', 'Ask a Question').should('be.visible')
@@ -99,6 +100,7 @@ describe('Negative critical flows', () => {
     cy.wait('@login')
     cy.wait('@me')
     cy.wait('@reviewQueue')
+    cy.acceptTermsIfPresent()
 
     cy.url().should('include', '/review')
     cy.contains(pendingQuestion.title).should('be.visible')

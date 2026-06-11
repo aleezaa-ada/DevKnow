@@ -51,6 +51,7 @@ describe('Review and approve flow', () => {
 
     cy.wait('@login')
     cy.wait('@me')
+    cy.acceptTermsIfPresent()
 
     cy.url().should('include', '/review')
     cy.wait('@getReviewQueue')

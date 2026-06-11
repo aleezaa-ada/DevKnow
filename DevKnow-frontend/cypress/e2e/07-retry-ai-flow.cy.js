@@ -10,6 +10,7 @@ describe('Retry AI flow', () => {
       win.localStorage.setItem('access_token', 'fake-access-token')
       win.localStorage.setItem('refresh_token', 'fake-refresh-token')
       win.localStorage.setItem('user', JSON.stringify({ id: userId, username, role: 'standard' }))
+      win.localStorage.setItem(`devknow_terms_accepted_${userId}`, '1')
     })
   }
 
