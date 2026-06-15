@@ -57,6 +57,7 @@ describe('Review and approve flow', () => {
     cy.wait('@getReviewQueue')
     cy.contains('h1', 'Review Queue').should('be.visible')
     cy.contains(reviewTitle).should('be.visible')
+    cy.acceptTermsIfPresent()
 
     cy.contains('button', /expand/i).first().click()
     cy.contains('button', 'Submit decision').click()
