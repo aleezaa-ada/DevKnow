@@ -228,11 +228,12 @@
 .editLabel {
   font-size: 0.9rem;
   font-weight: 500;
+  color: #1f3a25;
 }
 
 .editOptional {
   font-weight: 400;
-  color: #888;
+  color: #46644a;
   font-size: 0.85rem;
 }
 
@@ -241,10 +242,22 @@
   padding: 0.5rem;
   font-size: 0.95rem;
   font-family: inherit;
-  border: 1px solid #ccc;
+  border: 1px solid #9fb8a2;
   border-radius: 4px;
+  background: #fff;
+  color: #122015;
   resize: vertical;
   box-sizing: border-box;
+}
+
+.editTextarea::placeholder {
+  color: #4f5f52;
+}
+
+.editTextarea:focus {
+  outline: none;
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
 }
 
 .editActions {
@@ -252,30 +265,38 @@
   gap: 0.75rem;
 }
 
-.editSaveBtn {
+button.editSaveBtn {
   padding: 0.45rem 1.1rem;
   font-size: 0.95rem;
   cursor: pointer;
   background: #2e7d32;
   color: #fff;
-  border: none;
+  border: 1px solid #256b2b;
   border-radius: 4px;
 }
 
-.editSaveBtn:disabled {
+button.editSaveBtn:hover:not(:disabled) {
+  background: #256b2b;
+  border-color: #1f5a24;
+}
+
+button.editSaveBtn:disabled {
   background: #90a4ae;
+  border-color: #90a4ae;
   cursor: not-allowed;
 }
 
-.editCancelBtn {
+button.editCancelBtn {
   padding: 0.45rem 1.1rem;
   font-size: 0.95rem;
   cursor: pointer;
-  background: #fff;
-  border: 1px solid #ccc;
+  background: #f7faf7;
+  color: #1f3a25;
+  border: 1px solid #9fb8a2;
   border-radius: 4px;
 }
 
-.editCancelBtn:hover:not(:disabled) {
-  background: #f5f5f5;
+button.editCancelBtn:hover:not(:disabled) {
+  background: #eef5ee;
+  border-color: #89ab8d;
 }
