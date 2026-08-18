@@ -12,7 +12,7 @@ Django REST Framework API for the DevKnow platform. Handles authentication, role
 | Framework | Django 6 + Django REST Framework 3.17 |
 | Database | PostgreSQL |
 | Authentication | JWT via `djangorestframework-simplejwt` |
-| AI Integration | Anthropic Claude API (via `openai` SDK) |
+| AI Integration | Deloitte AI gateway (via `openai` SDK) |
 | Linting | Ruff |
 
 ---
@@ -32,7 +32,7 @@ DevKnow-backend/
 ├── questions/          # Question lifecycle, AI integration, review workflow
 │   ├── models.py
 │   ├── views.py
-│   ├── ai_service.py   # Anthropic API wrapper
+│   ├── ai_service.py   # Deloitte AI gateway wrapper
 │   ├── permissions.py
 │   └── urls.py
 ├── manage.py
@@ -70,7 +70,9 @@ DB_PASSWORD=your-db-password
 DB_HOST=localhost
 DB_PORT=5432
 
-ANTHROPIC_API_KEY=your-anthropic-api-key
+DELOITTE_API_KEY=your-deloitte-api-key
+DELOITTE_BASE_URL=https://your-deloitte-gateway-url
+DELOITTE_MODEL=gpt-4o
 
 ALLOWED_HOSTS=localhost,127.0.0.1
 ```
@@ -111,14 +113,14 @@ API is available at `http://localhost:8000/api/`.
 | POST | `/api/questions/` | Submit a new question (triggers AI generation) |
 | GET | `/api/questions/:id/` | Get question detail |
 | DELETE | `/api/questions/:id/` | Delete own question (owner only) |
-| POST | `/api/questions/:id/retry/` | Retry AI generation |
+| POST | `/api/questions/:id/retry-ai/` | Retry AI generation |
 
 ### Review (Senior/Admin only)
 
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/api/questions/review/` | Get pending review queue |
-| POST | `/api/questions/:ai_id/review/` | Approve, edit-and-approve, or reject AI draft |
+| POST | `/api/questions/:ai_response_id/review/` | Approve, edit-and-approve, or reject AI draft |
 
 ---
 

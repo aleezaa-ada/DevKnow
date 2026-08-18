@@ -148,7 +148,7 @@ npm run e2e:run
 
 ## Key Design Decisions
 
-- **Session-safe async submission:** The Ask Question page captures the active user ID at submit start and validates it before navigating on response, preventing cross-user redirect bugs during async AI generation.
+- **Session-safe submission handling:** The Ask Question page captures the active user ID at submit start and validates it before navigating on response, preventing cross-user redirect bugs during long-running question submission requests.
 - **Server-side role enforcement:** Role control is handled by the backend only. The frontend renders based on the role returned from `/api/auth/me/` after login.
 - **First-login T&C modal:** Displayed once per user (keyed by user ID in `localStorage`) to ensure explicit agreement to confidentiality and acceptable-use terms before platform access.
 
